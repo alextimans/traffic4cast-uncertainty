@@ -52,12 +52,12 @@ def make_cmap_light(cmap_str: str = "OrRd"):
 # =============================================================================
 # STATIC VALUES
 # =============================================================================
-map_path = "./data/raw"
-fig_path = "./figures/test_100/test_100_1_report"
-base_path = "./results/test_100/test_100_1/h5_files"
+map_path = "./data/raw_samp"
+fig_path = "./figures/test_100_pp/test_100_1"
+base_path = "./results/test_100_pp/test_100_1/h5_files"
 
 city = "MOSCOW" # ANTWERP, BANGKOK, BARCELONA, MOSCOW
-uq_method = "combo" # bnorm, combo, point, ensemble, patches, tta
+uq_method = "combo" # bnorm, combo, combopatch, point, ensemble, patches, tta
 m = "False" # Masked values: True, False
 ch = "speed" # Channel group: speed, vol
 
@@ -114,7 +114,7 @@ r=230; c=190; num=30 #city center
 sc_str = ["mean_gt", "mean_mse", "mean_unc", "pi_width", "ence", "sp_corr"]
 titles = ["Ground truth", "MSE", "Uncertainty", "MPIW", "ENCE", r"Correlation $\rho_{sp}$"]
 
-for uq_method in ["point", "combo"]:
+for uq_method in ["point", "combo", "combopatch", "tta", "ensemble"]:
     scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
     
     for ch in list(ch_idx.keys()):
@@ -144,7 +144,7 @@ for uq_method in ["point", "combo"]:
 # =============================================================================
 # Mean MSE vs. uncertainty, fixed ch, spatial map whole city
 # =============================================================================
-for uq_method in ["point", "tta", "ensemble", "combo"]:
+for uq_method in ["point", "tta", "combo", "combopatch"]:
     scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
 
     for ch in list(ch_idx.keys()):
@@ -168,12 +168,13 @@ for uq_method in ["point", "tta", "ensemble", "combo"]:
                      "Mean log-norm MSE vs. unc", fontsize="small")
         
         save_fig(fig_path, city, uq_method, f"mse_unc_{ch}")
-uq_method="combo"
+# uq_method="combo"
 
 # =============================================================================
 # Mean MSE vs. unc decomp. for "combo", fixed ch, spatial map whole city
 # =============================================================================
-pred = load_h5_file(os.path.join(base_path, city, "pred_combo.h5"))
+uq = "combopatch"
+pred = load_h5_file(os.path.join(base_path, city, f"pred_{uq}.h5"))
 data = torch.stack((mse_samples(pred[:, :2, ...]),
                     torch.mean(pred[:, 2, ...] + pred[:, 3, ...], dim=0),
                     torch.mean(pred[:, 2, ...], dim=0),
@@ -208,17 +209,18 @@ for ch in list(ch_idx.keys()):
     im3 = ax3.imshow(normalize_by(torch.log(epi), pred_max), cmap=my_cmap, vmin=0, vmax=1)
     im4 = ax4.imshow(normalize_by(torch.log(alea), pred_max), cmap=my_cmap, vmin=0, vmax=1)
     fig.colorbar(im1, ax=[ax1, ax2, ax3, ax4], location="right", aspect=20, pad=0.015, shrink=0.75)
-    fig.suptitle(f"{city.capitalize()}, UQ: combo, Ch: {ch}, " +
+    fig.suptitle(f"{city.capitalize()}, UQ: {uq}, Ch: {ch}, " +
                  "Mean log-norm MSE vs. unc decomposition", fontsize="small")
 
-    save_fig(fig_path, city, "combo", f"mse_unc_decomp_{ch}")
+    save_fig(fig_path, city, uq, f"mse_unc_decomp_{ch}")
 
 
 # =============================================================================
 # Mean MSE vs. unc decomp for "combo", fixed ch, spatial map city crop
 # =============================================================================
+uq = "combopatch"
 res_map = load_h5_file(os.path.join(map_path, city, f"{city}_map_high_res.h5"))
-pred = load_h5_file(os.path.join(base_path, city, "pred_combo.h5"))
+pred = load_h5_file(os.path.join(base_path, city, f"pred_{uq}.h5"))
 
 for ch in list(ch_idx.keys()):
 
@@ -227,7 +229,7 @@ for ch in list(ch_idx.keys()):
                         torch.mean(pred[:, 2, :, :, ch_idx[ch]], dim=(0, -1)),
                         torch.mean(pred[:, 3, :, :, ch_idx[ch]], dim=(0, -1))))
     
-    r=240; c=220; num=20 #city center
+    r=174; c=247; num=30 #bridge
 
     my_cmap = make_cmap()
     fig, axes = plt.subplots(1, 4, figsize=(8, 2.6))
@@ -257,11 +259,11 @@ for ch in list(ch_idx.keys()):
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
     fig.colorbar(mappable=im, ax=axes.ravel().tolist(), location="right", aspect=20, pad=0.015, shrink=0.61)
-    fig.suptitle(f"{city.capitalize()}, UQ: combo, Ch: {ch}, " +
+    fig.suptitle(f"{city.capitalize()}, UQ: {uq}, Ch: {ch}, " +
                  f"Crop ({r-num}:{r+num}, {c-num}:{c+num}),\n" +
                  "Mean log-norm MSE vs. unc decomposition", fontsize="small")
     
-    save_fig(fig_path, city, "combo", f"mse_unc_decomp_{ch}_crop_{r}_{c}")
+    save_fig(fig_path, city, uq, f"mse_unc_decomp_{ch}_crop_{r}_{c}")
 
 
 # =============================================================================
@@ -304,7 +306,7 @@ lab = "Unc"
 res_map = load_h5_file(os.path.join(map_path, city, f"{city}_map_high_res.h5"))
 scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
 
-r=358; c=226; num=30 #highway w merge
+r=265; c=100; num=20 #outside highway junction
 
 my_cmap = make_cmap()
 fig, axes = plt.subplots(1, 2, figsize=(4, 2.6))
@@ -385,8 +387,10 @@ save_fig(fig_path, city, uq_method, f"{dat_str}_{ch}_crops")
 # =============================================================================
 # All unc methods, fixed ch, spatial map whole city
 # =============================================================================
-uq_str = ["point", "combo", "ensemble", "bnorm", "tta", "patches"]
-titles = ["CUB (P)", "TTA + Ens (P)", "Ens (E)", "MCBN (E)", "TTA (A)", "Patches (A)"]
+#uq_str = ["point", "combo", "ensemble", "bnorm", "tta", "patches"]
+uq_str = ["point", "combo", "combopatch", "tta"]
+#titles = ["CUB (P)", "TTA + Ens (P)", "Ens (E)", "MCBN (E)", "TTA (A)", "Patches (A)"]
+titles = ["CUB (P)", "TTA + Ens (P)", "Patches + Ens (P)", "TTA (A)"]
 
 dat = torch.empty((len(uq_str), 495, 436))
 
@@ -415,10 +419,12 @@ for ch in list(ch_idx.keys()):
 # =============================================================================
 # All unc methods, fixed ch, spatial map city crop
 # =============================================================================
-uq_str = ["point", "combo", "ensemble", "bnorm", "tta", "patches"]
-titles = ["CUB (P)", "TTA + Ens (P)", "Ens (E)", "MCBN (E)", "TTA (A)", "Patches (A)"]
+#uq_str = ["point", "combo", "ensemble", "bnorm", "tta", "patches"]
+uq_str = ["point", "combo", "combopatch", "tta"]
+#titles = ["CUB (P)", "TTA + Ens (P)", "Ens (E)", "MCBN (E)", "TTA (A)", "Patches (A)"]
+titles = ["CUB (P)", "TTA + Ens (P)", "Patches + Ens (P)", "TTA (A)"]
 
-r=235; c=242; num=20 #highway loop
+r=152; c=60; num=30 #Losinoostrovksy district
 
 res_map = load_h5_file(os.path.join(map_path, city, f"{city}_map_high_res.h5"))
 dat = torch.empty((len(uq_str), 495, 436))
@@ -486,7 +492,7 @@ for ch in list(ch_idx.keys()):
 # =============================================================================
 # Corr histograms zero vs. non-zero GT, fixed ch
 # =============================================================================
-for uq_method in ["point", "combo"]:
+for uq_method in ["point", "combo", "combopatch"]:
     scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
     gt = scores[sc_idx["mean_gt"], :, :, ch_idx["vol"]]
     gt_zero = gt.sum(dim=-1) <= 0

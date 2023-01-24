@@ -16,9 +16,9 @@ from util.logging import t4c_apply_basic_logging_config
 from util.get_device import get_device
 from util.set_seed import set_seed
 
-from uq.eval_model import eval_test, eval_calib
+# from uq.eval_model import eval_test, eval_calib
 # replace and uncomment below for evaluating TTA + Ens combination and call eval_tta_ensemble
-# from uq.eval_tta_ensemble import eval_test, eval_calib
+from uq.eval_tta_ensemble import eval_test, eval_calib
 # replace and uncomment below for evaluating Patches + Ens combination and call eval_patches_ensemble
 # from uq.eval_patches_ensemble import eval_test, eval_calib
 
@@ -162,12 +162,12 @@ def main():
                             file_filter=train_file_filter,
                             dataset_type="train",
                             dataset_limit=train_data_limit,
-                            **configs[model_str]["dataset_config"]["point"])
+                            **configs["unet"]["dataset_config"]["point"])
     data_val = T4CDataset(root_dir=data_raw_path,
                           file_filter=val_file_filter,
                           dataset_type="val",
                           dataset_limit=val_data_limit,
-                          **configs[model_str]["dataset_config"]["point"])
+                          **configs["unet"]["dataset_config"]["point"])
 
     assert (len(data_train) > 0) and (len(data_val) > 0)
     logging.info("Dataset sizes: Train = %s, Val = %s." %(len(data_train), len(data_val)))
@@ -249,4 +249,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    

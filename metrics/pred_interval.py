@@ -30,11 +30,23 @@ def get_quantile(pred, n: int = None, alpha: float = 0.1):
 
     # clamp value max to 99% quantile to avoid outlier distortions due to small uncertainties
     # works with np.quantile, not with torch.quantile because "tensor too large"
-    max_clamp = torch.tensor(np.quantile((torch.abs(pred[:, 0, ...] - pred[:, 1, ...]) / pred[:, 2, ...]).cpu().numpy()
-                            , 0.99), dtype=torch.float32)
+    max_clamp = torch.tensor(
+        np.quantile(
+            (torch.abs(pred[:, 0, ...] - pred[:, 1, ...]) / pred[:, 2, ...])
+            .cpu()
+            .numpy(),
+            0.99,
+        ),
+        dtype=torch.float32,
+    )
 
-    return torch.quantile((torch.abs(pred[:, 0, ...] - pred[:, 1, ...]) / pred[:, 2, ...]
-                           ).clamp(max=max_clamp), quant, dim=0)
+    return torch.quantile(
+        (torch.abs(pred[:, 0, ...] - pred[:, 1, ...]) / pred[:, 2, ...]).clamp(
+            max=max_clamp
+        ),
+        quant,
+        dim=0,
+    )
 
 
 def get_pred_interval(pred, quantiles):
@@ -46,16 +58,21 @@ def get_pred_interval(pred, quantiles):
     Returns: prediction interval tensor (samples, 2, 6, H, W, Ch), where 2nd dim
     '2' is interval lower bound (0), interval upper bound (1).
     The prediction intervals returned are symmetric about the prediction.
-    
-    Prediction tensor should contain the predictions for the test set on 
+
+    Prediction tensor should contain the predictions for the test set on
     a single city that matches the city for which the quantiles were computed.
 
     Note: Interval values are not clamped to [0, 255] and thus may exceed uint8 limits.
           Clamping will influence mean PI width metric if performed prior to evaluation.
     """
 
-    return torch.stack(((pred[:, 0, ...] - pred[:, 1, ...] * quantiles),
-                        (pred[:, 0, ...] + pred[:, 1, ...] * quantiles)), dim=1)
+    return torch.stack(
+        (
+            (pred[:, 0, ...] - pred[:, 1, ...] * quantiles),
+            (pred[:, 0, ...] + pred[:, 1, ...] * quantiles),
+        ),
+        dim=1,
+    )
 
 
 def coverage(pred):
@@ -67,12 +84,16 @@ def coverage(pred):
     as tensor (6, H, W, Ch) with values in [0, 1].
     """
 
-    bool_mask = torch.stack(((pred[:, 0, ...] >= pred[:, 1, ...]),
-                             (pred[:, 0, ...] <= pred[:, 2, ...])), dim=1)
+    bool_mask = torch.stack(
+        ((pred[:, 0, ...] >= pred[:, 1, ...]), (pred[:, 0, ...] <= pred[:, 2, ...])),
+        dim=1,
+    )
 
-    bool_mask = torch.ones_like(bool_mask[:, 0, ...]) * (torch.sum(bool_mask, dim=1) > 1)
+    bool_mask = torch.ones_like(bool_mask[:, 0, ...]) * (
+        torch.sum(bool_mask, dim=1) > 1
+    )
 
-    return torch.sum(bool_mask, dim=0) / bool_mask.shape[0] # torch.float32
+    return torch.sum(bool_mask, dim=0) / bool_mask.shape[0]  # torch.float32
 
 
 def mean_pi_width(pred):

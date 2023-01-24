@@ -18,7 +18,9 @@ from util.set_seed import set_seed
 
 # from uq.eval_model import eval_test, eval_calib
 # replace and uncomment below for evaluating TTA + Ens combination and call eval_tta_ensemble
-from uq.eval_tta_ensemble import eval_test, eval_calib
+# from uq.eval_tta_ensemble import eval_test, eval_calib
+# replace and uncomment below for evaluating Patches + Ens combination and call eval_patches_ensemble
+from uq.eval_patches_ensemble import eval_test, eval_calib
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -98,7 +100,6 @@ def create_parser() -> argparse.ArgumentParser:
 
 
 def main():
-
     """
     - CLI arguments handling
     - Seed setting
@@ -112,7 +113,8 @@ def main():
 
     # Parsing
     t4c_apply_basic_logging_config()
-    logging.info("Running %s..." %(sys._getframe().f_code.co_name)) # Current fct name
+    logging.info("Running %s..." %
+                 (sys._getframe().f_code.co_name))  # Current fct name
     parser = create_parser()
     args = parser.parse_args()
     logging.info("CLI arguments parsed.")
@@ -131,7 +133,7 @@ def main():
     data_limit = args.data_limit
     train_data_limit = args.train_data_limit
     val_data_limit = args.val_data_limit
-    test_data_limit = args.test_data_limit # list[x, y, z]
+    test_data_limit = args.test_data_limit  # list[x, y, z]
     data_raw_path = args.data_raw_path
     train_file_filter = args.train_file_filter
     val_file_filter = args.val_file_filter
@@ -168,22 +170,24 @@ def main():
                           **configs["unet"]["dataset_config"]["point"])
 
     assert (len(data_train) > 0) and (len(data_val) > 0)
-    logging.info("Dataset sizes: Train = %s, Val = %s." %(len(data_train), len(data_val)))
+    logging.info("Dataset sizes: Train = %s, Val = %s." %
+                 (len(data_train), len(data_val)))
 
     # Model setup
     model = model_class(**model_config)
     assert model_class == model.__class__, f"{model.__class__=} invalid."
     logging.info(f"Created model of class {model_class}.")
 
-    if eval(display_model) is not False: # str to bool
+    if eval(display_model) is not False:  # str to bool
         logging.info(model)
 
     # Device setting
     device, parallel_use = get_device(device, data_parallel)
-    if parallel_use: # Multiple GPU usage
+    if parallel_use:  # Multiple GPU usage
         model = torch.nn.DataParallel(model, device_ids=device_ids)
-        logging.info(f"Using {len(model.device_ids)} GPUs: {model.device_ids}.")
-        device = f"cuda:{model.device_ids[0]}" # cuda:0 is main process device
+        logging.info(
+            f"Using {len(model.device_ids)} GPUs: {model.device_ids}.")
+        device = f"cuda:{model.device_ids[0]}"  # cuda:0 is main process device
     logging.info(f"Using {device=}, {parallel_use=}.")
     vars(args).pop("device")
 
@@ -216,14 +220,14 @@ def main():
     if eval(calibration) is not False:
         logging.info("Running calibration script...")
         eval_calib(model=model,
-                    dataset_config=dataset_config,
-                    dataloader_config=dataloader_config,
-                    device=device,
-                    parallel_use=parallel_use,
-                    alpha=0.1, # 90% PIs
-                    city_limit=test_data_limit[0],
-                    to_file = True,
-                    **(vars(args)))
+                   dataset_config=dataset_config,
+                   dataloader_config=dataloader_config,
+                   device=device,
+                   parallel_use=parallel_use,
+                   alpha=0.1,  # 90% PIs
+                   city_limit=test_data_limit[0],
+                   to_file=True,
+                   **(vars(args)))
         logging.info("Calibration script finished.")
 
     # Test set evaluation
@@ -231,13 +235,13 @@ def main():
         logging.info("Evaluating model on test set...")
         logging.info(f"Evaluating uncertainty using '{uq_method}'...")
         eval_test(model=model,
-                    dataset_limit=test_data_limit,
-                    dataset_config=dataset_config,
-                    dataloader_config=dataloader_config,
-                    device=device,
-                    parallel_use=parallel_use,
-                    alpha=0.1,
-                    **(vars(args)))
+                  dataset_limit=test_data_limit,
+                  dataset_config=dataset_config,
+                  dataloader_config=dataloader_config,
+                  device=device,
+                  parallel_use=parallel_use,
+                  alpha=0.1,
+                  **(vars(args)))
         logging.info("Model evaluated.")
     else:
         logging.info("Model test set evaluation not called.")

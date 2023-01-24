@@ -94,6 +94,7 @@ def eval_test(model: torch.nn.Module,
 
     ensemble = load_ensemble(
         device, save_checkpoint, configs[model_str]["model_class"], configs[model_str]["model_config"])
+    uq_method_obj.set_pre_transform(configs[model_str]["pre_transform"][uq_method])
 
     if dataset_limit[0] is not None:  # Limit #cities
         assert dataset_limit[0] <= len(cities)
@@ -139,7 +140,7 @@ def eval_test(model: torch.nn.Module,
                                 pin_memory=parallel_use,
                                 **dataloader_config)
 
-        uq_method = "combo"
+        uq_method = "combopatch"
         ens = torch.empty(size=(len(ensemble), len(sub_idx),
                           3, 495, 436, 8), dtype=torch.float32, device="cpu")
         for i, member in enumerate(ensemble):
@@ -254,6 +255,7 @@ def eval_calib(model: torch.nn.Module,
 
     ensemble = load_ensemble(
         device, save_checkpoint, configs[model_str]["model_class"], configs[model_str]["model_config"])
+    uq_method_obj.set_pre_transform(configs[model_str]["pre_transform"][uq_method])
 
     if city_limit is not None:  # Limit #cities
         assert city_limit <= len(cities)
@@ -281,7 +283,7 @@ def eval_calib(model: torch.nn.Module,
                                 pin_memory=parallel_use,
                                 **dataloader_config)
 
-        uq_method = "combo"
+        uq_method = "combopatch"
         ens = torch.empty(size=(len(ensemble), len(sub_idx),
                           3, 495, 436, 8), dtype=torch.float32, device="cpu")
         for i, member in enumerate(ensemble):
