@@ -60,7 +60,7 @@ class PatchUncertainty:
         nr_in_y = (ylen - 2 * radius) // stride + 2
     
         patch_collection = np.zeros((nr_in_x * nr_in_y, tlen,
-                                     radius * 2, radius * 2, chlen))  # to do: 2 auf 8 etc
+                                     radius * 2, radius * 2, chlen))
         avg_arr = np.zeros((xlen, ylen))
         index_arr = np.zeros((nr_in_x * nr_in_y, 4))
     
@@ -138,8 +138,7 @@ class PatchUncertainty:
             prediction[:, start_x:end_x, start_y:end_y] += out_patch[i]
     
         expand_avg_arr = np.tile(np.expand_dims(avg_arr, 2), 8)
-        # avg_prediction = prediction / expand_avg_arr
-    
+
         return prediction / expand_avg_arr
 
     def get_std(self, out_patch, means, avg_arr, index_arr):
@@ -154,8 +153,7 @@ class PatchUncertainty:
             std_prediction[:, start_x:end_x, start_y:end_y] += (out_patch[i] - means[:, start_x:end_x, start_y:end_y]) ** 2
     
         expand_avg_arr = np.tile(np.expand_dims(avg_arr, 2), 8)
-        # avg_prediction = np.sqrt(std_prediction / expand_avg_arr)
-    
+
         return np.sqrt(std_prediction / expand_avg_arr)
 
     @torch.no_grad()
@@ -178,7 +176,8 @@ class PatchUncertainty:
 
                 # inp_patch: tensor (patch_x*patch_y, 12*Ch, 2*radius+pad, 2*radius+pad) e.g. (15*13, 12*8, 112, 112)
                 # avg_arr: np.array (495, 436), index_arr: np.array (15*13, 4)
-                inp_patch, avg_arr, index_arr = self.get_input_patches(X.squeeze(dim=0))
+                inp_patch, avg_arr, index_arr = self.get_input_patches((X/255).squeeze(dim=0)) # For UNet
+                # inp_patch, avg_arr, index_arr = self.get_input_patches(X.squeeze(dim=0))
                 # print(inp_patch.shape, avg_arr.shape, index_arr.shape)
 
                 # out: tensor (15*13, 6*Ch, 112, 112)

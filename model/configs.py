@@ -26,6 +26,7 @@ configs = {
         "uq_method": {
             "point": point_pred.PointPred(),
             "tta": data_augmentation.DataAugmentation(),
+            "patches": patches.PatchUncertainty(radius=50, stride=30),
             "ensemble": ensemble.DeepEnsemble(load_from_epoch=[1,1,1,1,1]),
             "bnorm": stochastic_batchnorm.StochasticBatchNorm(passes=10, train_batch_size=12)
         },
@@ -43,6 +44,13 @@ configs = {
                                      zeropad2d=(30, 30, 1, 0), # (495, 436) -> (496, 496)
                                      batch_dim=False)
                 },
+            "patches": {
+                # "transform": torch.nn.Identity
+                # "transform": partial(UNetTransfomer.unet_pre_transform,
+                #                      stack_channels_on_time=True,
+                #                      zeropad2d=(6, 6, 6, 6),
+                #                      batch_dim=False)
+                },
             "ensemble": {
                 "transform": partial(UNetTransformer.unet_pre_transform,
                                      stack_channels_on_time=True,
@@ -59,20 +67,25 @@ configs = {
 
         "pre_transform": {
             "point": partial(UNetTransformer.unet_pre_transform,
-                                 stack_channels_on_time=True,
-                                 zeropad2d=(6, 6, 1, 0),
-                                 batch_dim=True,
-                                 from_numpy=False),
+                                stack_channels_on_time=True,
+                                zeropad2d=(6, 6, 1, 0),
+                                batch_dim=True,
+                                from_numpy=False),
             "tta": partial(UNetTransformer.unet_pre_transform,
                                  stack_channels_on_time=True,
                                  zeropad2d=(30, 30, 1, 0),
                                  batch_dim=True,
                                  from_numpy=False),
+            "patches": partial(UNetTransformer.unet_pre_transform,
+                                   stack_channels_on_time=True,
+                                   zeropad2d=(6, 6, 6, 6),
+                                   batch_dim=True,
+                                   from_numpy=True),
             "ensemble": partial(UNetTransformer.unet_pre_transform,
-                                 stack_channels_on_time=True,
-                                 zeropad2d=(6, 6, 1, 0),
-                                 batch_dim=True,
-                                 from_numpy=False),
+                                    stack_channels_on_time=True,
+                                    zeropad2d=(6, 6, 1, 0),
+                                    batch_dim=True,
+                                    from_numpy=False),
             "bnorm": partial(UNetTransformer.unet_pre_transform,
                                  stack_channels_on_time=True,
                                  zeropad2d=(6, 6, 1, 0),
@@ -89,14 +102,18 @@ configs = {
                                   unstack_channels_on_time=True,
                                   crop=(30, 30, 1, 0),
                                   batch_dim=True),
+            "patches": partial(UNetTransformer.unet_post_transform,
+                                    unstack_channels_on_time=True,
+                                    crop=(6, 6, 6, 6),
+                                    batch_dim=True),
             "ensemble": partial(UNetTransformer.unet_post_transform,
-                                  unstack_channels_on_time=True,
-                                  crop=(6, 6, 1, 0),
-                                  batch_dim=True),
+                                    unstack_channels_on_time=True,
+                                    crop=(6, 6, 1, 0),
+                                    batch_dim=True),
             "bnorm": partial(UNetTransformer.unet_post_transform,
-                                  unstack_channels_on_time=True,
-                                  crop=(6, 6, 1, 0),
-                                  batch_dim=True),
+                                    unstack_channels_on_time=True,
+                                    crop=(6, 6, 1, 0),
+                                    batch_dim=True),
             },
 
         "dataloader_config": {
@@ -179,7 +196,7 @@ configs = {
     },
 
     "unet_pp": {
-        "model_class": Nested_UNet,
+        "model_class": Nested_UNet, # UNet++
 
         "model_config": {
             "in_channels": 12 * 8,
@@ -188,7 +205,7 @@ configs = {
             "wf": 6,
             "padding": True,
             "batch_norm": True,
-            "up_mode": "upconv" # does nothing
+            "up_mode": "upconv" # does not affect
             },
 
         "uq_method": {

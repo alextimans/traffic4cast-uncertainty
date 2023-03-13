@@ -24,9 +24,9 @@ def load_ensemble(device: str, save_checkpoint: str, model_class,
                   model_config, load_from_epoch: list = [1, 1, 1, 1, 1]):
     ensemble = []
     for i, ep in enumerate(load_from_epoch):
-        # checkpt = glob.glob(os.path.join(save_checkpoint, f"unet_{i+1}", f"unet_ep{ep}_*.pt"))[0]
-        checkpt = glob.glob(os.path.join(
-            save_checkpoint, f"unet_pp_{i+8}", f"unet_pp_ep{ep}_*.pt"))[0]  # For UNet++
+        checkpt = glob.glob(os.path.join(save_checkpoint, f"unet_{i+1}", f"unet_ep{ep}_*.pt"))[0]
+#        checkpt = glob.glob(os.path.join(
+#            save_checkpoint, f"unet_pp_{i+8}", f"unet_pp_ep{ep}_*.pt"))[0]  # For UNet++
         model = model_class(**model_config)
         if device != "cpu":
             model = torch.nn.DataParallel(model)

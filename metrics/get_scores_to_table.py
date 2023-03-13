@@ -149,11 +149,11 @@ def aggregate_tables(test_pred_path: str, agg_nr: int):
         res = res.round(3)
 
         # sort uq methods by desired order
-        sorter = ["point", "combo", "ensemble", "bnorm", "tta", "patches"]
+        sorter = ["point", "combo", "combopatch", "ensemble", "bnorm", "tta", "patches"]
         res["uq_method"] = (
             res["uq_method"].astype("category").cat.set_categories(sorter)
         )
-        res = res.sort_values(["city", "uq_method"]).groupby("city").head(6)
+        res = res.sort_values(["city", "uq_method"]).groupby("city").head(7)
 
         # create new str columns
         s = " +- "
