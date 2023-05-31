@@ -7,7 +7,7 @@ Despite the strong predictive performance of deep learning models for traffic pr
 
 ---
 
-If you found this work useful, please consider citing:
+If you find this work useful, please consider citing:
 ```
 @online{timans2023uqtraffic,
   author       = {Timans, Alexander and Wiedemann, Nina and Kumar, Nishant and Hong, Ye and Raubal, Martin},
