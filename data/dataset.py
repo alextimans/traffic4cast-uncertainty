@@ -1,4 +1,4 @@
-# base code from https://github.com/iarai/NeurIPS2021-traffic4cast
+# adapted from base code from https://github.com/iarai/NeurIPS2021-traffic4cast
 
 from pathlib import Path
 from typing import Callable, Optional, Tuple, Union
@@ -150,39 +150,40 @@ def data_split_xy(data, offset: int = 0) -> Tuple[torch.Tensor, torch.Tensor]:
     return X, y
 
 
-"""
-def test(idx):
-    files = ["file1_city1", "file2_city1", "file3_city1", "file1_city2", "file2_city2", "file3_city2"]
-    MAX_FILE_DAY_IDX = 288
-    MAX_ONE_DAY_SMP_IDX = 264
-    TWO_HOURS = 24
+# test item splitting
+# 
+# def test(idx):
+#     files = ["file1_city1", "file2_city1", "file3_city1", "file1_city2", "file2_city2", "file3_city2"]
+#     MAX_FILE_DAY_IDX = 288
+#     MAX_ONE_DAY_SMP_IDX = 264
+#     TWO_HOURS = 24
 
-    if idx > (len(files) * MAX_FILE_DAY_IDX):
-        raise IndexError(f"Sample index {idx} out of bounds.")
+#     if idx > (len(files) * MAX_FILE_DAY_IDX):
+#         raise IndexError(f"Sample index {idx} out of bounds.")
 
-    file_idx = idx // MAX_FILE_DAY_IDX # Div and floor to int
-    start_hour = idx % MAX_FILE_DAY_IDX # Modulo
+#     file_idx = idx // MAX_FILE_DAY_IDX # Div and floor to int
+#     start_hour = idx % MAX_FILE_DAY_IDX # Modulo
 
-    nr_files_per_city = 3 # i.e. self.count
+#     nr_files_per_city = 3 # i.e. self.count
 
-    if (file_idx == len(files)): # Last file case idx 288
-        print("Last index")
-        file_idx -= 1
-        start_hour = MAX_ONE_DAY_SMP_IDX
-    elif ((file_idx + 1) % nr_files_per_city == 0 and start_hour > MAX_ONE_DAY_SMP_IDX): # Idx 264-287
-        start_hour = MAX_ONE_DAY_SMP_IDX
+#     if (file_idx == len(files)): # Last file case idx 288
+#         print("Last index")
+#         file_idx -= 1
+#         start_hour = MAX_ONE_DAY_SMP_IDX
+#     elif ((file_idx + 1) % nr_files_per_city == 0 and start_hour > MAX_ONE_DAY_SMP_IDX): # Idx 264-287
+#         start_hour = MAX_ONE_DAY_SMP_IDX
     
-    if (start_hour > MAX_ONE_DAY_SMP_IDX): # Two hours stretch across two h5 files
-        slots_1st_day = MAX_FILE_DAY_IDX - start_hour
-        slots_2nd_day = TWO_HOURS - slots_1st_day
+#     if (start_hour > MAX_ONE_DAY_SMP_IDX): # Two hours stretch across two h5 files
+#         slots_1st_day = MAX_FILE_DAY_IDX - start_hour
+#         slots_2nd_day = TWO_HOURS - slots_1st_day
     
-        sl_1st_day = slice(start_hour, start_hour + slots_1st_day) # X x 5m slots
-        sl_2nd_day = slice(0, slots_2nd_day) # Y x 5m slots s.t. X + Y = 24
+#         sl_1st_day = slice(start_hour, start_hour + slots_1st_day) # X x 5m slots
+#         sl_2nd_day = slice(0, slots_2nd_day) # Y x 5m slots s.t. X + Y = 24
     
-        print(f"1st day // File: {files[file_idx]}, slice: {sl_1st_day}")
-        print(f"2nd day // File: {files[file_idx+1]}, slice: {sl_2nd_day}")
+#         print(f"1st day // File: {files[file_idx]}, slice: {sl_1st_day}")
+#         print(f"2nd day // File: {files[file_idx+1]}, slice: {sl_2nd_day}")
     
-    else: # Two hours stretch across one h5 file
-        sl = slice(start_hour, start_hour + TWO_HOURS) # 24 x 5m slots
-        print(f"One day // File: {files[file_idx]}, slice: {sl}")
-"""
+#     else: # Two hours stretch across one h5 file
+#         sl = slice(start_hour, start_hour + TWO_HOURS) # 24 x 5m slots
+#         print(f"One day // File: {files[file_idx]}, slice: {sl}")
+#

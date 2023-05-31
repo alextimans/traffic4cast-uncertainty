@@ -1,4 +1,7 @@
-# base code from https://github.com/iarai/NeurIPS2021-traffic4cast
+"""
+Main.py stand-alone script is the primary entry point for model training, 
+conformal interval generation and uncertainty quantification evaluation.
+"""
 
 import argparse
 import logging
@@ -16,11 +19,10 @@ from util.logging import t4c_apply_basic_logging_config
 from util.get_device import get_device
 from util.set_seed import set_seed
 
-from uq.eval_model import eval_test, eval_calib
-# replace and uncomment below for evaluating TTA + Ens combination and call eval_tta_ensemble
-# from uq.eval_tta_ensemble import eval_test, eval_calib
-# replace and uncomment below for evaluating Patches + Ens combination and call eval_patches_ensemble
-# from uq.eval_patches_ensemble import eval_test, eval_calib
+# MODIFY HERE FOR DIFFERENT UQ METHODS
+from uq.eval_model import eval_test, eval_calib  # this is for evaluating any single UQ method
+# from uq.eval_tta_ensemble import eval_test, eval_calib  # replace and uncomment for evaluating TTA+Ens
+# from uq.eval_patches_ensemble import eval_test, eval_calib  # replace and uncomment for evaluating Patches+Ens
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -222,7 +224,7 @@ def main():
                     dataloader_config=dataloader_config,
                     device=device,
                     parallel_use=parallel_use,
-                    alpha=0.1, # 90% PIs
+                    alpha=0.1, # 90% prediction interval coverage
                     city_limit=test_data_limit[0],
                     to_file = True,
                     **(vars(args)))
@@ -238,7 +240,7 @@ def main():
                     dataloader_config=dataloader_config,
                     device=device,
                     parallel_use=parallel_use,
-                    alpha=0.1,
+                    alpha=0.1, # 90% prediction interval coverage
                     **(vars(args)))
         logging.info("Model evaluated.")
     else:

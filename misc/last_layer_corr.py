@@ -1,3 +1,7 @@
+"""
+Compute and plot the correlation between the last layer weights of the U-Nets in the ensemble.
+"""
+
 import os
 import torch
 from scipy.stats import spearmanr

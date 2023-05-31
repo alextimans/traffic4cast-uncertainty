@@ -1,3 +1,10 @@
+"""
+Stand-alone script that is called to run the unsupervised outlier detection application,
+including loading train and test uncertainties (and predicting for test data if not available),
+computing p-values via KDE fits, aggregating p-values and providing outlier labels and outlier statistics.
+"""
+
+
 import os
 import sys
 import logging

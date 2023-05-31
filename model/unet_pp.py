@@ -1,13 +1,11 @@
-# copy from https://github.com/NinaWie/NeurIPS2021-traffic4cast/blob/master/baselines/unet_plusplus.py
+# copied from https://github.com/NinaWie/NeurIPS2021-traffic4cast/blob/master/baselines/unet_plusplus.py
+
+"""
+UNet++ model architecture
+"""
 
 import torch
 import torch.nn as nn
-
-
-"""
-This Pytorch implementation of Unet++ is taken from 
-https://gist.github.com/jinglescode/9d9ed6027e62e389e3165b59209e838e
-"""
 
 
 class conv_block_nested(nn.Module):
@@ -40,7 +38,7 @@ class Nested_UNet(nn.Module):
         filters = [n1, n1 * 2, n1 * 4, n1 * 8, n1 * 16]
 
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        # NOTE: Model architecture does not use "upconv" = ConvTranspose2d but only upsampling
+        # Note: Model architecture does not use "upconv" = ConvTranspose2d but only upsampling
         self.Up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
 
         self.conv0_0 = conv_block_nested(in_channels, filters[0], filters[0])

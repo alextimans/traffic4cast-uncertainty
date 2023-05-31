@@ -1,3 +1,7 @@
+"""
+Test time augmentation (TTA) for aleatoric uncertainty estimation.
+"""
+
 from functools import partial
 
 import torch
@@ -67,10 +71,12 @@ class DataAugmentation:
     def aggregate(self, pred: torch.Tensor) -> torch.Tensor:
 
         """
-        Receives: prediction tensor (1+k, 6 * Ch, H, W) and
-        computes the aleatoric uncertainty obtained via test-time augmentation.
-        Returns: tensor (2, 6 * Ch, H, W) where 1st dimension is point prediction (0),
-        uncertainty measure (1).
+        Receives: 
+            prediction tensor (1+k, 6 * Ch, H, W) and
+            computes the aleatoric uncertainty obtained via test-time augmentation.
+        
+        Returns: 
+            tensor (2, 6 * Ch, H, W) where 1st dimension is point prediction (0), uncertainty measure (1).
         """
 
         # Aleatoric uncertainty estimation: std over original & augmented imgs; ensure uncertainty >0 for numerical reasons
@@ -93,17 +99,18 @@ class DataAugmentation:
                 if batch == batch_limit:
                     break
     
+                # MODIFY HERE FOR DIFFERENT MODELS
                 # X, y = X.to(device, non_blocking=parallel_use) / 255, y.to(device, non_blocking=parallel_use)
                 X, y = X.to(device, non_blocking=parallel_use), y.to(device, non_blocking=parallel_use) # for UNet++
+                
                 X = self.transform(X) # (1+k, 12 * Ch, H+pad, W+pad) in [0, 1]
     
-                y_pred = model(X) # (1+k, 6 * Ch, H+pad, W+pad) NOT in [0, 255]?
+                y_pred = model(X) # (1+k, 6 * Ch, H+pad, W+pad)
                 loss = loss_fct(y_pred[0, :, 1:, 30:-30], y[:, :, 1:, 30:-30].squeeze(dim=0)) # For original img & unpadded
     
                 y_pred[...] = self.detransform(y_pred) # (1+k, 6 * Ch, H+pad, W+pad)
                 y_pred = self.aggregate(y_pred) # (2, 6 * Ch, H+pad, W+pad)
                 y_pred = post_transform(torch.cat((y, y_pred), dim=0))[:, 5, ...].clamp(0, 255).unsqueeze(dim=0) # (1, 3, H, W, Ch), only consider pred horizon 1h
-                # logging.info(f"{y_pred.shape, torch.min(y_pred), torch.max(y_pred)}")
     
                 loss_sum += float(loss.item())
                 loss_test = float(loss_sum/(batch+1))

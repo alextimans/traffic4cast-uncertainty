@@ -1,3 +1,7 @@
+"""
+Deep ensembles (Ens) for epistemic uncertainty estimation.
+"""
+
 import os
 import glob
 import logging
@@ -16,8 +20,11 @@ class DeepEnsemble:
 
     def load_ensemble(self, device: str, save_checkpoint: str, model_class, model_config):
         for i, ep in enumerate(self.load_from_epoch):
+            
+            # MODIFY HERE FOR DIFFERENT MODELS
             # checkpt = glob.glob(os.path.join(save_checkpoint, f"unet_{i+1}", f"unet_ep{ep}_*.pt"))[0]
             checkpt = glob.glob(os.path.join(save_checkpoint, f"unet_pp_{i+8}", f"unet_pp_ep{ep}_*.pt"))[0] # For UNet++
+            
             model = model_class(**model_config)
             if device != "cpu":
                 model = torch.nn.DataParallel(model)
@@ -28,10 +35,12 @@ class DeepEnsemble:
     def aggregate(self, pred):
 
         """
-        Receives: prediction tensor (ensemble_size, 6 * Ch, H, W) and
-        computes the average prediction and epistemic uncertainty.
-        Returns: tensor (2, 6 * Ch, H, W) where 1st dimension is mean point prediction (0),
-        uncertainty measure (1).
+        Receives: 
+            prediction tensor (ensemble_size, 6 * Ch, H, W) and
+            computes the average prediction and epistemic uncertainty.
+        
+        Returns: 
+            tensor (2, 6 * Ch, H, W) where 1st dimension is mean point prediction (0), uncertainty measure (1).
         """
 
         # Epistemic uncertainty estimation: std over ensemble predictions; ensure uncertainty >0 for numerical reasons
@@ -55,8 +64,10 @@ class DeepEnsemble:
                 if batch == batch_limit:
                     break
           
+                # MODIFY HERE FOR DIFFERENT MODELS
                 # X, y = X.to(device, non_blocking=parallel_use) / 255, y.to(device, non_blocking=parallel_use)
                 X, y = X.to(device, non_blocking=parallel_use), y.to(device, non_blocking=parallel_use) # For UNet++
+                
                 y_pred = self.aggregate(torch.cat((self.ensemble[0](X), # (2, 6 * Ch, H+pad, W+pad)
                                                    self.ensemble[1](X),
                                                    self.ensemble[2](X),

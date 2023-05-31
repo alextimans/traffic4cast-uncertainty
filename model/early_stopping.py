@@ -1,4 +1,4 @@
-# base code from https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py
+# adapted from base code from https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py
 
 import logging
 import numpy as np

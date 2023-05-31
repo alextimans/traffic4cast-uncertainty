@@ -1,6 +1,9 @@
-import os
+"""
+Given a path to folders containing score files, aggregate them into a single table, 
+or aggregate multiple tables into a single table.
+"""
 
-# import glob
+import os
 import argparse
 
 import numpy as np

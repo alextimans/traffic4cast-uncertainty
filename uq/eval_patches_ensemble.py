@@ -1,3 +1,11 @@
+"""
+Script that is called from main.py to evaluate Patches+Ens method for predictive uncertainty on the test set, 
+and obtain conformal quantiles on calibration data.
+
+It does so by running Patches within a loop for each ensemble member and aggregating.
+"""
+
+
 import os
 import sys
 import logging
@@ -24,9 +32,11 @@ def load_ensemble(device: str, save_checkpoint: str, model_class,
                   model_config, load_from_epoch: list = [1, 1, 1, 1, 1]):
     ensemble = []
     for i, ep in enumerate(load_from_epoch):
-        checkpt = glob.glob(os.path.join(save_checkpoint, f"unet_{i+1}", f"unet_ep{ep}_*.pt"))[0]
-#        checkpt = glob.glob(os.path.join(
-#            save_checkpoint, f"unet_pp_{i+8}", f"unet_pp_ep{ep}_*.pt"))[0]  # For UNet++
+        
+        # MODIFY HERE FOR DIFFERENT MODELS
+        # checkpt = glob.glob(os.path.join(save_checkpoint, f"unet_{i+1}", f"unet_ep{ep}_*.pt"))[0]
+        checkpt = glob.glob(os.path.join(save_checkpoint, f"unet_pp_{i+8}", f"unet_pp_ep{ep}_*.pt"))[0]  # For UNet++
+        
         model = model_class(**model_config)
         if device != "cpu":
             model = torch.nn.DataParallel(model)
@@ -162,8 +172,7 @@ def eval_test(model: torch.nn.Module,
         if pred_to_file:
             write_data_to_h5(data=pred, dtype=np.float16, compression="lzf", verbose=True,
                              filename=os.path.join(h5_pred_path, f"pred_{uq_method}.h5"))
-        pred = get_predictive_uncertainty(ens).to(
-            device)  # sum both uncertainties
+        pred = get_predictive_uncertainty(ens).to(device)  # sum both uncertainties
         del ens
 
         quant = os.path.join(quantiles_path, city,
@@ -304,7 +313,6 @@ def eval_calib(model: torch.nn.Module,
         # (samples, 3, H, W, Ch) torch.float32, where 2: total predictive uncertainty
         pred = get_predictive_uncertainty(ens).to(device)
 
-        # pred[0, 0, ...] = get_quantile(pred, n=calibration_size, alpha=alpha) # (H, W, Ch)
         quant = get_quantile(pred, n=calibration_size,
                              alpha=alpha)  # (H, W, Ch)
         logging.info(f"Obtained quantiles as {quant.shape, quant.dtype}.")
@@ -316,7 +324,6 @@ def eval_calib(model: torch.nn.Module,
                 quant_path = Path(os.path.join(quantiles_path, city))
                 quant_path.mkdir(exist_ok=True, parents=True)
             quant_name = f"quant_{int((1-alpha)*100)}_{uq_method}.h5"
-            #write_data_to_h5(data=pred[0, 0, ...], dtype=np.float16, filename=os.path.join(quant_path, quant_name), compression="lzf", verbose=True)
             write_data_to_h5(data=quant, dtype=np.float16, filename=os.path.join(
                 quant_path, quant_name), compression="lzf", verbose=True)
 

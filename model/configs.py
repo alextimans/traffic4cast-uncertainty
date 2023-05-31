@@ -1,4 +1,10 @@
-# base code from https://github.com/iarai/NeurIPS2021-traffic4cast
+# adapted from base code from https://github.com/iarai/NeurIPS2021-traffic4cast
+
+"""
+This file contains all the relevant configs for the models and the UQ methods in dict format.
+Main configs per model are for UNet, UNetPatches (UNet trained on patches) and Nested_UNet (UNet++).
+Single UQ methods are CUB (point), TTA (tta), Patches (patches), Ens (ensemble) and MCBN (bnorm).
+"""
 
 from functools import partial
 from model.unet import UNet
@@ -26,7 +32,7 @@ configs = {
         "uq_method": {
             "point": point_pred.PointPred(),
             "tta": data_augmentation.DataAugmentation(),
-            "patches": patches.PatchUncertainty(radius=50, stride=30),
+            "patches": patches.PatchUncertainty(radius=50, stride=10),
             "ensemble": ensemble.DeepEnsemble(load_from_epoch=[1,1,1,1,1]),
             "bnorm": stochastic_batchnorm.StochasticBatchNorm(passes=10, train_batch_size=12)
         },
@@ -45,11 +51,6 @@ configs = {
                                      batch_dim=False)
                 },
             "patches": {
-                # "transform": torch.nn.Identity
-                # "transform": partial(UNetTransfomer.unet_pre_transform,
-                #                      stack_channels_on_time=True,
-                #                      zeropad2d=(6, 6, 6, 6),
-                #                      batch_dim=False)
                 },
             "ensemble": {
                 "transform": partial(UNetTransformer.unet_pre_transform,
@@ -159,12 +160,11 @@ configs = {
             },
 
         "uq_method": {
-            "patches": patches.PatchUncertainty(radius=50, stride=30)
+            "patches": patches.PatchUncertainty(radius=50, stride=10)
             },
 
         "dataset_config": {
             "patches": {
-                # "transform": torch.nn.Identity
                 }
             },
 
@@ -210,7 +210,7 @@ configs = {
 
         "uq_method": {
             "tta": data_augmentation.DataAugmentation(),
-            "patches": patches.PatchUncertainty(radius=50, stride=30),
+            "patches": patches.PatchUncertainty(radius=50, stride=10),
             "point": point_pred.PointPred(),
             "ensemble": ensemble.DeepEnsemble(load_from_epoch=[1,1,1,1,1]),
             "bnorm": stochastic_batchnorm.StochasticBatchNorm(passes=10, train_batch_size=10)
@@ -224,11 +224,6 @@ configs = {
                                      batch_dim=False)
                 },
             "patches": {
-                # "transform": torch.nn.Identity
-                # "transform": partial(UNetTransfomer.unet_pre_transform,
-                #                      stack_channels_on_time=True,
-                #                      zeropad2d=(6, 6, 6, 6),
-                #                      batch_dim=False)
                 },
             "point": {
                 "transform": partial(UNetTransfomer.unet_pre_transform,

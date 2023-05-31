@@ -1,3 +1,8 @@
+"""
+This script contains all the generated plots for the spatial uncertainty quantification section.
+After setting the desired static values, plots can be run individually in-line or the loop can be called to generate all plots at once.
+"""
+
 import os
 from pathlib import Path
 
@@ -6,7 +11,7 @@ import numpy as np
 import seaborn as sns
 
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap #, LinearSegmentedColormap
+from matplotlib.colors import ListedColormap
 
 from util.h5_util import load_h5_file
 from metrics.mse import mse_samples
@@ -50,14 +55,14 @@ def make_cmap_light(cmap_str: str = "OrRd"):
 
 
 # =============================================================================
-# STATIC VALUES
+# STATIC VALUES (MODIFY HERE)
 # =============================================================================
-map_path = "./data/raw_samp"
+map_path = "./data/raw"
 # test_100 for unet, test_100_pp for unet++
 fig_path = "./figures/test_100_pp/test_100_1_all_uq_methods"
 base_path = "./results/test_100_pp/test_100_1/h5_files"
 
-city = "BARCELONA" # ANTWERP, BANGKOK, BARCELONA, MOSCOW
+city = "ANTWERP" # ANTWERP, BANGKOK, BARCELONA, MOSCOW
 uq_method = "combo" # bnorm, combo, combopatch, point, ensemble, patches, tta
 m = "False" # Masked values: True, False
 ch = "speed" # Channel group: speed, vol
@@ -128,7 +133,7 @@ for city in all_cities:
     sc_str = ["mean_gt", "mean_mse", "mean_unc", "pi_width", "ence", "sp_corr"]
     titles = ["Ground truth", "MSE", "Uncertainty", "MPIW", "ENCE", r"Correlation $\rho_{sp}$"]
     
-    for uq_method in all_uq: #["point", "combo", "combopatch", "tta", "ensemble"]:
+    for uq_method in all_uq:
         scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
         
         for ch in list(ch_idx.keys()):
@@ -158,37 +163,36 @@ for city in all_cities:
     # =============================================================================
     # Mean MSE vs. uncertainty, fixed ch, spatial map whole city
     # =============================================================================
-    # for uq_method in ["point", "tta", "combo", "combopatch"]:
-    #     scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
+    for uq_method in ["point", "tta", "combo", "combopatch"]:
+        scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
     
-    #     for ch in list(ch_idx.keys()):
-    #         unc = torch.mean(scores[sc_idx["mean_unc"], :, :, ch_idx[ch]], dim=-1)#[150:300, 150:300] #[150:300, 150:300], [220:250, 230:260]
-    #         mse = torch.mean(scores[sc_idx["mean_mse"], :, :, ch_idx[ch]], dim=-1)#[150:300, 150:300]
+        for ch in list(ch_idx.keys()):
+            unc = torch.mean(scores[sc_idx["mean_unc"], :, :, ch_idx[ch]], dim=-1)
+            mse = torch.mean(scores[sc_idx["mean_mse"], :, :, ch_idx[ch]], dim=-1)
     
-    #         my_cmap = make_cmap()
-    #         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(4, 2.4))
-    #         fig.subplots_adjust(wspace=0.1)
-    #         ax1.set_title("MSE", fontsize="small")
-    #         ax1.get_yaxis().set_visible(False)
-    #         ax1.get_xaxis().set_visible(False)
-    #         ax2.set_title("Uncertainty", fontsize="small")
-    #         ax2.get_yaxis().set_visible(False)
-    #         ax2.get_xaxis().set_visible(False)
+            my_cmap = make_cmap()
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(4, 2.4))
+            fig.subplots_adjust(wspace=0.1)
+            ax1.set_title("MSE", fontsize="small")
+            ax1.get_yaxis().set_visible(False)
+            ax1.get_xaxis().set_visible(False)
+            ax2.set_title("Uncertainty", fontsize="small")
+            ax2.get_yaxis().set_visible(False)
+            ax2.get_xaxis().set_visible(False)
             
-    #         im1 = ax1.imshow(normalize(torch.log(mse.clamp(min=1e-5))), cmap=my_cmap, vmin=0, vmax=1)
-    #         im2 = ax2.imshow(normalize(torch.log(unc)), cmap=my_cmap, vmin=0, vmax=1)
-    #         fig.colorbar(im1, ax=[ax1, ax2], location="right", aspect=20, pad=0.03, shrink=0.75)
-    #         fig.suptitle(f"{city.capitalize()}, UQ: {uq_method}, Ch: {ch}, " +
-    #                       "Mean log-norm MSE vs. unc", fontsize="small")
+            im1 = ax1.imshow(normalize(torch.log(mse.clamp(min=1e-5))), cmap=my_cmap, vmin=0, vmax=1)
+            im2 = ax2.imshow(normalize(torch.log(unc)), cmap=my_cmap, vmin=0, vmax=1)
+            fig.colorbar(im1, ax=[ax1, ax2], location="right", aspect=20, pad=0.03, shrink=0.75)
+            fig.suptitle(f"{city.capitalize()}, UQ: {uq_method}, Ch: {ch}, " +
+                          "Mean log-norm MSE vs. unc", fontsize="small")
             
-    #         save_fig(fig_path, city, uq_method, f"mse_unc_{ch}")
-    # uq_method="combo"
+            save_fig(fig_path, city, uq_method, f"mse_unc_{ch}")
+    uq_method="combo"
     
     # =============================================================================
     # Mean MSE vs. unc decomp. for "combo", fixed ch, spatial map whole city
     # =============================================================================
     for uq in ["combo", "combopatch"]:
-    # uq = "combopatch"
         pred = load_h5_file(os.path.join(base_path, city, f"pred_{uq}.h5"))
         data = torch.stack((mse_samples(pred[:, :2, ...]),
                             torch.mean(pred[:, 2, ...] + pred[:, 3, ...], dim=0),
@@ -234,7 +238,6 @@ for city in all_cities:
     # Mean MSE vs. unc decomp for "combo", fixed ch, spatial map city crop
     # =============================================================================
     for uq in ["combo", "combopatch"]:
-    # uq = "combo"
         res_map = load_h5_file(os.path.join(map_path, city, f"{city}_map_high_res.h5"))
         pred = load_h5_file(os.path.join(base_path, city, f"pred_{uq}.h5"))
         
@@ -268,8 +271,6 @@ for city in all_cities:
                                 continue
                             blup[i+10*num, j+10*num] = data[r+i//10, c+j//10]
             
-                    # im = ax.imshow(blup, cmap=my_cmap, vmin=0, vmax=1)#, alpha=0.5)
-                    # ax.imshow(res_map[10*(r-num):10*(r+num), 10*(c-num):10*(c+num)], cmap='gray_r', alpha=0.55, vmin=0, vmax=255)
                     ax.imshow(res_map[10*(r-num):10*(r+num), 10*(c-num):10*(c+num)], cmap='gray_r', vmin=0, vmax=255)
                     im = ax.imshow(blup, cmap=my_cmap, vmin=0, vmax=1, alpha=0.55)
                     ax.set_title(f"{labs[o]}", fontsize="small")
@@ -286,128 +287,126 @@ for city in all_cities:
     # =============================================================================
     # Mean X, vol and speed, spatial map whole city
     # =============================================================================
-    # dat_str = "std_gt" #"sp_corr"
-    # lab = "GT std." #r"Corr. $\rho_{sp}$"
+    dat_str = "std_gt" # MODIFY HERE
+    lab = "GT std." # MODIFY HERE
     
-    # scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
-    # dat_v = torch.mean(scores[sc_idx[dat_str], :, :, ch_idx["vol"]], dim=-1)
-    # dat_s = torch.mean(scores[sc_idx[dat_str], :, :, ch_idx["speed"]], dim=-1)
+    scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
+    dat_v = torch.mean(scores[sc_idx[dat_str], :, :, ch_idx["vol"]], dim=-1)
+    dat_s = torch.mean(scores[sc_idx[dat_str], :, :, ch_idx["speed"]], dim=-1)
     
-    # my_cmap = make_cmap() # "rainbow" "coolwarm"
-    # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(4, 2.4))
-    # fig.subplots_adjust(wspace=0.1)
-    # ax1.set_title(f"{lab} volume", fontsize="small")
-    # ax1.get_yaxis().set_visible(False)
-    # ax1.get_xaxis().set_visible(False)
-    # ax2.set_title(f"{lab} speed", fontsize="small")
-    # ax2.get_yaxis().set_visible(False)
-    # ax2.get_xaxis().set_visible(False)
+    my_cmap = make_cmap()
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(4, 2.4))
+    fig.subplots_adjust(wspace=0.1)
+    ax1.set_title(f"{lab} volume", fontsize="small")
+    ax1.get_yaxis().set_visible(False)
+    ax1.get_xaxis().set_visible(False)
+    ax2.set_title(f"{lab} speed", fontsize="small")
+    ax2.get_yaxis().set_visible(False)
+    ax2.get_xaxis().set_visible(False)
     
-    # # im1 = ax1.imshow(dat_v.clamp(min=1e-5), cmap=my_cmap, vmin=-1, vmax=1)
-    # # im2 = ax2.imshow(dat_s.clamp(min=1e-5), cmap=my_cmap, vmin=-1, vmax=1)
-    # im1 = ax1.imshow(normalize(torch.log(dat_v.clamp(min=1e-5))), cmap=my_cmap, vmin=0, vmax=1)
-    # im2 = ax2.imshow(normalize(torch.log(dat_s.clamp(min=1e-5))), cmap=my_cmap, vmin=0, vmax=1)
-    # fig.colorbar(im1, ax=[ax1, ax2], location="right", aspect=20, pad=0.03, shrink=0.75)
-    # fig.suptitle(f"{city.capitalize()}, UQ: {uq_method}, " +
-    #              f"Mean log-norm {lab} by channels", fontsize="small")
+    # im1 = ax1.imshow(dat_v.clamp(min=1e-5), cmap=my_cmap, vmin=-1, vmax=1)
+    # im2 = ax2.imshow(dat_s.clamp(min=1e-5), cmap=my_cmap, vmin=-1, vmax=1)
+    im1 = ax1.imshow(normalize(torch.log(dat_v.clamp(min=1e-5))), cmap=my_cmap, vmin=0, vmax=1)
+    im2 = ax2.imshow(normalize(torch.log(dat_s.clamp(min=1e-5))), cmap=my_cmap, vmin=0, vmax=1)
+    fig.colorbar(im1, ax=[ax1, ax2], location="right", aspect=20, pad=0.03, shrink=0.75)
+    fig.suptitle(f"{city.capitalize()}, UQ: {uq_method}, " +
+                 f"Mean log-norm {lab} by channels", fontsize="small")
     
-    # save_fig(fig_path, city, uq_method, f"{dat_str}_bych")
+    save_fig(fig_path, city, uq_method, f"{dat_str}_bych")
     
     
     # =============================================================================
     # Mean X, vol and speed, spatial map city crop
     # =============================================================================
-    # dat_str = "mean_unc"
-    # lab = "Unc"
+    dat_str = "mean_gt" # MODIFY HERE
+    lab = "Ground truth" # MODIFY HERE
     
-    # res_map = load_h5_file(os.path.join(map_path, city, f"{city}_map_high_res.h5"))
-    # scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
+    res_map = load_h5_file(os.path.join(map_path, city, f"{city}_map_high_res.h5"))
+    scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
     
-    # r=265; c=100; num=20 #outside highway junction
+    r=270; c=230; num=20 # MODIFY HERE
+
+    my_cmap = make_cmap()
+    fig, axes = plt.subplots(1, 2, figsize=(4, 2.6))
+    fig.subplots_adjust(wspace=0.1)
+    labs = ["vol", "speed"]
+    for o, ax in enumerate(axes.flat):
     
-    # my_cmap = make_cmap()
-    # fig, axes = plt.subplots(1, 2, figsize=(4, 2.6))
-    # fig.subplots_adjust(wspace=0.1)
-    # labs = ["vol", "speed"]
-    # for o, ax in enumerate(axes.flat):
+        data = normalize(torch.log(torch.mean(scores[sc_idx[dat_str], :, :, ch_idx[labs[o]]], dim=-1).clamp(min=1e-5)))
     
-    #     data = normalize(torch.log(torch.mean(dat[sc_idx[dat_str], :, :, ch_idx[labs[o]]], dim=-1).clamp(min=1e-5)))
+        blup = torch.empty((2*10*num, 2*10*num))
+        for i in range(-10*num, 10*num):
+            for j in range(-10*num, 10*num):
+                if r+i//10 >= 495 or c+j//10 >= 436:
+                    continue
+                blup[i+10*num, j+10*num] = data[r+i//10, c+j//10]
     
-    #     blup = torch.empty((2*10*num, 2*10*num))
-    #     for i in range(-10*num, 10*num):
-    #         for j in range(-10*num, 10*num):
-    #             if r+i//10 >= 495 or c+j//10 >= 436:
-    #                 continue
-    #             blup[i+10*num, j+10*num] = data[r+i//10, c+j//10]
+        # im = ax.imshow(blup, cmap=my_cmap, vmin=0, vmax=1)#, alpha=0.5)
+        # ax.imshow(res_map[10*(r-num):10*(r+num), 10*(c-num):10*(c+num)], cmap='gray_r', alpha=0.55, vmin=0, vmax=255)
+        ax.imshow(res_map[10*(r-num):10*(r+num), 10*(c-num):10*(c+num)], cmap='gray_r', vmin=0, vmax=255)
+        im = ax.imshow(blup, cmap=my_cmap, vmin=0, vmax=1, alpha=0.55)
+        # ax.set_title(f"{lab} {labs[o]}", fontsize="small")
+        ax.set_title(f"{lab}", fontsize="small")
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+    fig.colorbar(mappable=im, ax=axes.ravel().tolist(), location="right", aspect=20, pad=0.03, shrink=0.63)
+    fig.suptitle(f"{city.capitalize()}, UQ: {uq_method}, " +
+                  f"Crop ({r-num}:{r+num}, {c-num}:{c+num}),\n" +
+                  f"Mean log-norm {lab} by channels", fontsize="small")
     
-    #     # im = ax.imshow(blup, cmap=my_cmap, vmin=0, vmax=1)#, alpha=0.5)
-    #     # ax.imshow(res_map[10*(r-num):10*(r+num), 10*(c-num):10*(c+num)], cmap='gray_r', alpha=0.55, vmin=0, vmax=255)
-    #     ax.imshow(res_map[10*(r-num):10*(r+num), 10*(c-num):10*(c+num)], cmap='gray_r', vmin=0, vmax=255)
-    #     im = ax.imshow(blup, cmap=my_cmap, vmin=0, vmax=1, alpha=0.55)
-    #     ax.set_title(f"{lab} {labs[o]}", fontsize="small")
-    #     ax.get_xaxis().set_visible(False)
-    #     ax.get_yaxis().set_visible(False)
-    # fig.colorbar(mappable=im, ax=axes.ravel().tolist(), location="right", aspect=20, pad=0.03, shrink=0.63)
-    # fig.suptitle(f"{city.capitalize()}, UQ: {uq_method}, " +
-    #              f"Crop ({r-num}:{r+num}, {c-num}:{c+num}),\n" +
-    #              f"Mean log-norm {lab} by channels", fontsize="small")
-    
-    # save_fig(fig_path, city, uq_method, f"{dat_str}_bych_crop_{r}_{c}")
+    save_fig(fig_path, city, uq_method, f"{dat_str}_bych_crop_{r}_{c}")
     
     
     # =============================================================================
     # Mean X, fixed ch, spatial map city crop multiple at once
     # =============================================================================
-    # dat_str = "mean_unc"
-    # lab = "Unc."
+    dat_str = "mean_unc" # MODIFY HERE
+    lab = "Unc." # MODIFY HERE
     
-    # res_map = load_h5_file(os.path.join(map_path, city, f"{city}_map_high_res.h5"))
-    # scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
-    # dat = torch.log(torch.mean(scores[sc_idx[dat_str], :, :, ch_idx[ch]], dim=-1).clamp(min=1e-5))
-    # # dat = normalize(torch.log(dat.clamp(min=1e-5)))
+    res_map = load_h5_file(os.path.join(map_path, city, f"{city}_map_high_res.h5"))
+    scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
+    dat = torch.log(torch.mean(scores[sc_idx[dat_str], :, :, ch_idx[ch]], dim=-1).clamp(min=1e-5))
     
-    # r_list, c_list, num = [405, 368, 350], [172, 105, 255], 20
+    r_list, c_list, num = [405, 368, 350], [172, 105, 255], 20 # MODIFY HERE
     
-    # norm_max = torch.max(torch.tensor([
-    #     dat[r_list[0]-num:r_list[0]+num, c_list[0]-num:c_list[0]+num].max(),
-    #     dat[r_list[1]-num:r_list[1]+num, c_list[1]-num:c_list[1]+num].max(),
-    #     dat[r_list[2]-num:r_list[2]+num, c_list[2]-num:c_list[2]+num].max()]))
-    # dat = normalize_by(dat, norm_max)
+    norm_max = torch.max(torch.tensor([
+        dat[r_list[0]-num:r_list[0]+num, c_list[0]-num:c_list[0]+num].max(),
+        dat[r_list[1]-num:r_list[1]+num, c_list[1]-num:c_list[1]+num].max(),
+        dat[r_list[2]-num:r_list[2]+num, c_list[2]-num:c_list[2]+num].max()]))
+    dat = normalize_by(dat, norm_max)
     
-    # my_cmap = make_cmap()
-    # fig, axes = plt.subplots(1, 3, figsize=(8, 2.8))
-    # fig.subplots_adjust(wspace=0.1)
-    # for o, ax in enumerate(axes.flat):
-    #     r, c = r_list[o], c_list[o]
+    my_cmap = make_cmap()
+    fig, axes = plt.subplots(1, 3, figsize=(8, 2.8))
+    fig.subplots_adjust(wspace=0.1)
+    for o, ax in enumerate(axes.flat):
+        r, c = r_list[o], c_list[o]
     
-    #     blup = torch.empty((2*10*num, 2*10*num))
-    #     for i in range(-10*num, 10*num):
-    #         for j in range(-10*num, 10*num):
-    #             if r+i//10 >= 495 or c+j//10 >= 436:
-    #                 continue
-    #             blup[i+10*num, j+10*num] = dat[r+i//10, c+j//10]
+        blup = torch.empty((2*10*num, 2*10*num))
+        for i in range(-10*num, 10*num):
+            for j in range(-10*num, 10*num):
+                if r+i//10 >= 495 or c+j//10 >= 436:
+                    continue
+                blup[i+10*num, j+10*num] = dat[r+i//10, c+j//10]
     
-    #     # im = ax.imshow(blup, cmap=my_cmap, vmin=0, vmax=1)#, alpha=0.5)
-    #     # ax.imshow(res_map[10*(r-num):10*(r+num), 10*(c-num):10*(c+num)], cmap='gray_r', alpha=0.55, vmin=0, vmax=255)
-    #     ax.imshow(res_map[10*(r-num):10*(r+num), 10*(c-num):10*(c+num)], cmap='gray_r', vmin=0, vmax=255)
-    #     im = ax.imshow(blup, cmap=my_cmap, vmin=0, vmax=1, alpha=0.55)
-    #     ax.set_title(f"{lab}, ({r-num}:{r+num}, {c-num}:{c+num})", fontsize="small")
-    #     ax.get_xaxis().set_visible(False)
-    #     ax.get_yaxis().set_visible(False)
-    # fig.colorbar(mappable=im, ax=axes.ravel().tolist(), location="right", aspect=20, pad=0.02, shrink=0.76)
-    # fig.suptitle(f"{city.capitalize()}, UQ: {uq_method},\n" +
-    #              f"Mean log-norm {lab} for {ch} channels", fontsize="small")
+        # im = ax.imshow(blup, cmap=my_cmap, vmin=0, vmax=1)#, alpha=0.5)
+        # ax.imshow(res_map[10*(r-num):10*(r+num), 10*(c-num):10*(c+num)], cmap='gray_r', alpha=0.55, vmin=0, vmax=255)
+        ax.imshow(res_map[10*(r-num):10*(r+num), 10*(c-num):10*(c+num)], cmap='gray_r', vmin=0, vmax=255)
+        im = ax.imshow(blup, cmap=my_cmap, vmin=0, vmax=1, alpha=0.55)
+        ax.set_title(f"{lab}, ({r-num}:{r+num}, {c-num}:{c+num})", fontsize="small")
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+    fig.colorbar(mappable=im, ax=axes.ravel().tolist(), location="right", aspect=20, pad=0.02, shrink=0.76)
+    fig.suptitle(f"{city.capitalize()}, UQ: {uq_method},\n" +
+                 f"Mean log-norm {lab} for {ch} channels", fontsize="small")
     
-    # save_fig(fig_path, city, uq_method, f"{dat_str}_{ch}_crops")
+    save_fig(fig_path, city, uq_method, f"{dat_str}_{ch}_crops")
     
     
     # =============================================================================
     # All unc methods, fixed ch, spatial map whole city
     # =============================================================================
-    # uq_str = ["point", "combo", "combopatch", "tta"]
-    # titles = ["CUB (P)", "TTA + Ens (P)", "Patches + Ens (P)", "TTA (A)"]
-    uq_str = all_uq
-    titles = ["CUB (P)", "TTA + Ens (P)", "Patches + Ens (P)",
+    uq_str = all_uq # MODIFY HERE
+    titles = ["CUB (P)", "TTA + Ens (P)", "Patches + Ens (P)", # MODIFY HERE
               "Ens (E)", "MCBN (E)", "TTA (A)", "Patches (A)"]
     
     dat = torch.empty((len(uq_str), 495, 436))
@@ -437,13 +436,11 @@ for city in all_cities:
     # =============================================================================
     # All unc methods, fixed ch, spatial map city crop
     # =============================================================================
-    # uq_str = ["point", "combo", "combopatch", "tta"]
-    # titles = ["CUB (P)", "TTA + Ens (P)", "Patches + Ens (P)", "TTA (A)"]
-    uq_str = all_uq
-    titles = ["CUB (P)", "TTA + Ens (P)", "Patches + Ens (P)",
+    uq_str = all_uq # MODIFY HERE
+    titles = ["CUB (P)", "TTA + Ens (P)", "Patches + Ens (P)", # MODIFY HERE
               "Ens (E)", "MCBN (E)", "TTA (A)", "Patches (A)"]
     
-    crops = crops_by_city[city]
+    crops = crops_by_city[city] # CALLS CROPS
     for r, c, num in crops:
     
         res_map = load_h5_file(os.path.join(map_path, city, f"{city}_map_high_res.h5"))
@@ -487,55 +484,51 @@ for city in all_cities:
     # =============================================================================
     # Mean Correlation, filtered by non-zero GT, fixed ch, spatial map whole city
     # =============================================================================
-    # scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
-    # gt = scores[sc_idx["mean_gt"], :, :, ch_idx["vol"]]
-    # gt_zero = gt.sum(dim=-1) <= 0
-    # # gt_nonzero = gt.sum(dim=-1) > 0
+    scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
+    gt = scores[sc_idx["mean_gt"], :, :, ch_idx["vol"]]
+    gt_zero = gt.sum(dim=-1) <= 0
+    # gt_nonzero = gt.sum(dim=-1) > 0
     
-    # cbar_kws={"location": "right", "aspect": 40, "pad": 0.02}
+    cbar_kws={"location": "right", "aspect": 40, "pad": 0.02}
     
-    # for ch in list(ch_idx.keys()):
-    #     corr = torch.mean(scores[sc_idx["sp_corr"], :, :, ch_idx[ch]], dim=-1)
-    #     ax = sns.heatmap(corr.numpy(), mask=gt_zero.numpy(), cmap="coolwarm",
-    #                      vmin=-1, vmax=1, cbar_kws=cbar_kws, edgecolors="black")
-    #     ax.get_xaxis().set_visible(False)
-    #     ax.get_yaxis().set_visible(False)
-    #     ax.set_title(f"{city.capitalize()}, UQ: {uq_method}, Ch: {ch}\n " +
-    #                  r"Correlation $\rho_{sp}$ for non-zero ground truths", fontsize="small")
-    #     for _, spine in ax.spines.items():
-    #         spine.set_visible(True)
+    for ch in list(ch_idx.keys()):
+        corr = torch.mean(scores[sc_idx["sp_corr"], :, :, ch_idx[ch]], dim=-1)
+        ax = sns.heatmap(corr.numpy(), mask=gt_zero.numpy(), cmap="coolwarm",
+                         vmin=-1, vmax=1, cbar_kws=cbar_kws, edgecolors="black")
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        ax.set_title(f"{city.capitalize()}, UQ: {uq_method}, Ch: {ch}\n " +
+                     r"Correlation $\rho_{sp}$ for non-zero ground truths", fontsize="small")
+        for _, spine in ax.spines.items():
+            spine.set_visible(True)
     
-    #     save_fig(fig_path, city, uq_method, f"corr_masked_{ch}")
-    #     plt.clf()
+        save_fig(fig_path, city, uq_method, f"corr_masked_{ch}")
+        plt.clf()
     
     
     # =============================================================================
     # Corr histograms zero vs. non-zero GT, fixed ch
     # =============================================================================
-    for uq_method in ["point", "combo", "combopatch"]:
+    for uq_method in ["point", "combo", "combopatch"]: # MODIFY HERE
         scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
         gt = scores[sc_idx["mean_gt"], :, :, ch_idx["vol"]]
         gt_zero = gt.sum(dim=-1) <= 0
         gt_nonzero = gt.sum(dim=-1) > 0
         
         fig, axes = plt.subplots(1, 2, figsize=(10, 2.4))
-        # fig.subplots_adjust(wspace=0.1)
         labs = ["Volume", "Speed"]
         
         for i, ax in enumerate(axes.flat):
             corr = torch.mean(scores[sc_idx["sp_corr"], :, :, list(ch_idx.values())[i]], dim=-1)
             m_zero, m_nonzero = corr[gt_zero].mean().item(), corr[gt_nonzero].mean().item()
             ax.hist(corr[gt_zero].numpy(), bins=20, alpha=0.6, range=(-1,1),
-                    # color="blue", label=r"Zero GT, $\bar{\rho}_{sp}$ = " + f"{m_zero:.2f}", density=True)
                     color="blue", label=r"Zero ground truth", density=True)
             ax.hist(corr[gt_nonzero].numpy(), bins=20, alpha=0.6, range=(-1,1),
-                    # color="red", label=r"Non-zero GT, $\bar{\rho}_{sp}$ = " + f"{m_nonzero:.2f}", density=True)
                     color="red", label=r"Non-zero ground truth", density=True)
-            ax.legend(loc="upper left", fontsize="small") # large
+            ax.legend(loc="upper left", fontsize="small")
             ax.set_ylabel("Density")
             ax.set_xlabel(r"Correlation $\rho_{sp}$")
             ax.set_title(labs[i], fontsize="small")
-            # ax.grid()
         fig.suptitle(f"{city.capitalize()}, UQ: {uq_method}, Corr histograms by GT",
                      y=1.1, x=0.5, fontsize="small")
         
@@ -604,11 +597,10 @@ for city in all_cities:
                     label = "Nominal Beta fit")
                     # label=f"Beta({int(a)},{int(b)})")
             ax.set_xlim(0.75, 1)
-            ax.legend(loc="upper left", fontsize="small") # large
+            ax.legend(loc="upper left", fontsize="small")
             ax.set_ylabel("Density")
             ax.set_xlabel("Coverage level")
             ax.set_title(labs[i], fontsize="small")
-            # ax.grid()
         fig.suptitle(f"{city.capitalize()}, UQ: {uq_method}, Coverage histogram",
                      y=1.1, x=0.5, fontsize="small")
         
@@ -619,14 +611,15 @@ for city in all_cities:
     # Zero ground truth percentages per city
     # =============================================================================
     
-    # for city in ["ANTWERP","BANGKOK","BARCELONA","MOSCOW"]:
-    #     scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
-    #     pred = load_h5_file(os.path.join(base_path, city, f"pred_{uq_method}.h5"))
+    for city in ["ANTWERP","BANGKOK","BARCELONA","MOSCOW"]:
+        scores = load_h5_file(os.path.join(base_path, city, f"scores_{uq_method}{m_idx[m]}.h5"))
+        pred = load_h5_file(os.path.join(base_path, city, f"pred_{uq_method}.h5"))
     
-    #     print("="*4, city, "="*4)
-    #     gt = scores[sc_idx["mean_gt"], :, :, ch_idx["vol"]]
-    #     gt_zero = gt.sum(dim=-1) <= 0
-    #     print(f"GT Zero: {(gt_zero.sum()/(495*436))*100:.3f} %")
-    #     # Sanity check
-    #     gt_zero2 = (pred[:, 0, :, :, [0, 2, 4, 6]].sum(dim=(0, -1)) <= 0)
-    #     print(f"GT Zero 2: {(gt_zero2.sum()/(495*436))*100:.3f} %")
+        print("="*4, city, "="*4)
+        gt = scores[sc_idx["mean_gt"], :, :, ch_idx["vol"]]
+        gt_zero = gt.sum(dim=-1) <= 0
+        print(f"GT Zero: {(gt_zero.sum()/(495*436))*100:.3f} %")
+        
+        # Sanity check
+        gt_zero2 = (pred[:, 0, :, :, [0, 2, 4, 6]].sum(dim=(0, -1)) <= 0)
+        print(f"GT Zero 2: {(gt_zero2.sum()/(495*436))*100:.3f} %")

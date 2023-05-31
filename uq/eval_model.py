@@ -1,3 +1,8 @@
+"""
+Script that is called from main.py to evaluate a single UQ method on the test set, and obtain conformal quantiles on calibration data.
+"""
+
+
 import os
 import sys
 import logging
@@ -109,7 +114,6 @@ def eval_test(model: torch.nn.Module,
             write_data_to_h5(data=pred, dtype=np.float16, compression="lzf", verbose=True,
                              filename=os.path.join(h5_pred_path, f"pred_{uq_method}.h5"))
         
-        #quant = os.path.join(data_raw_path, city, quantiles_path)
         quant = os.path.join(quantiles_path, city, f"quant_{int((1-alpha)*100)}_{uq_method}.h5")
         logging.info(f"Using quantiles from '{quant}'.")
         pred_interval = get_pred_interval(pred[:, 1:, ...], load_h5_file(quant, dtype=torch.float16).to(device)) # (samples, 2, H, W, Ch) torch.float32
@@ -229,7 +233,6 @@ def eval_calib(model: torch.nn.Module,
         logging.info(f"Obtained predictions with uncertainty {uq_method} as {pred.shape, pred.dtype}.")
         logging.info(f"MSE loss for {city}: {loss_city}.")
 
-        #pred[0, 0, ...] = get_quantile(pred, n=calibration_size, alpha=alpha) # (H, W, Ch)
         quant = get_quantile(pred, n=calibration_size, alpha=alpha) # (H, W, Ch)
         logging.info(f"Obtained quantiles as {quant.shape, quant.dtype}.")
 
@@ -240,7 +243,6 @@ def eval_calib(model: torch.nn.Module,
                 quant_path = Path(os.path.join(quantiles_path, city))
                 quant_path.mkdir(exist_ok=True, parents=True)
             quant_name = f"quant_{int((1-alpha)*100)}_{uq_method}.h5"
-            #write_data_to_h5(data=pred[0, 0, ...], dtype=np.float16, filename=os.path.join(quant_path, quant_name), compression="lzf", verbose=True)
             write_data_to_h5(data=quant, dtype=np.float16, filename=os.path.join(quant_path, quant_name), compression="lzf", verbose=True)
 
         del data, dataloader, pred, quant

@@ -1,4 +1,8 @@
-# adapted from https://github.com/NinaWie/NeurIPS2021-traffic4cast
+# adapted from base code from https://github.com/NinaWie/NeurIPS2021-traffic4cast
+
+"""
+Patch-based uncertainty (Patches) for aleatoric uncertainty estimation.
+"""
 
 from typing import Tuple
 
@@ -6,44 +10,19 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-# from model.configs import configs
-
 
 class PatchUncertainty:
-    # def __init__(self, model_path, static_map_arr=None, device="cuda",
-    #              radius=50, stride=30, model_str="unet_patches", **kwargs):
     def __init__(self, radius: int, stride: int, static_map_arr = None):
         self.radius = radius
         self.stride = stride
         self.static_map = static_map_arr
-        # self.device = device
-        # self.model_str = model_str
-        # self.pre_transform = configs[model_str][]
-        # self.model = self.load_model(model_path,
-        #                              use_static_map=(self.static_map is not None))
-        # self.model = self.model.to(device)
-        # self.model.eval()
-
+ 
     def set_pre_transform(self, pre_transform):
         self.pre_transform = pre_transform
-
-    # def load_model(self, path, use_static_map=False):
-    #     model_class = configs[self.model_str]["model_class"]
-    #     model_config = configs[self.model_str].get("model_config", {})
-
-    #     if use_static_map:
-    #         model_config["in_channels"] += 9
-
-    #     model = model_class(**model_config, img_len=2 * self.radius)
-    #     loaded_dict = torch.load(path, map_location=torch.device("cpu"))
-    #     model.load_state_dict(loaded_dict["model"])
-
-    #     return model
 
     def get_input_patches(self, one_hour):
         patch_collection, avg_arr, index_arr, data_static = self.create_patches(
             one_hour, self.radius, self.stride, self.static_map)
-        # print("Number of patches per cell", np.mean(avg_arr), np.median(avg_arr))
 
         inp_patch = self.pre_transform(patch_collection)
         if self.static_map is not None:
@@ -55,7 +34,6 @@ class PatchUncertainty:
     def create_patches(self, one_hour, radius, stride, static_map):
     
         tlen, xlen, ylen, chlen = one_hour.shape
-        # print(xlen, (xlen - 2*radius), stride, (xlen - 2*radius) // stride)
         nr_in_x = (xlen - 2 * radius) // stride + 2
         nr_in_y = (ylen - 2 * radius) // stride + 2
     
@@ -99,11 +77,6 @@ class PatchUncertainty:
                 counter += 1
 
         return patch_collection, avg_arr, index_arr, data_static
-
-    # def process_patches(self, inp_patch, avg_arr, index_arr):
-    #     out_patch = self.predict_patches(inp_patch)
-
-    #     return out_patch, avg_arr, index_arr
 
     def predict_patches(self, inp_patch, model, device, internal_batch_size = 50):
         
@@ -176,9 +149,10 @@ class PatchUncertainty:
 
                 # inp_patch: tensor (patch_x*patch_y, 12*Ch, 2*radius+pad, 2*radius+pad) e.g. (15*13, 12*8, 112, 112)
                 # avg_arr: np.array (495, 436), index_arr: np.array (15*13, 4)
-                inp_patch, avg_arr, index_arr = self.get_input_patches((X/255).squeeze(dim=0)) # For UNet
-                # inp_patch, avg_arr, index_arr = self.get_input_patches(X.squeeze(dim=0))
-                # print(inp_patch.shape, avg_arr.shape, index_arr.shape)
+                
+                # MODIFY HERE FOR DIFFERENT MODELS
+                # inp_patch, avg_arr, index_arr = self.get_input_patches((X/255).squeeze(dim=0))
+                inp_patch, avg_arr, index_arr = self.get_input_patches(X.squeeze(dim=0)) # For UNet++
 
                 # out: tensor (15*13, 6*Ch, 112, 112)
                 out = self.predict_patches(inp_patch, model, device)
@@ -209,26 +183,3 @@ class PatchUncertainty:
                 del X, y, y_pred, std_pred
 
         return pred, loss_test
-
-
-# =============================================================================
-# def std_v1(out_patch, index_arr, out_shape):
-#     std_preds = np.zeros(out_shape)
-# 
-#     for p_x in range(495):
-#         for p_y in range(436):
-#             pixel = (p_x, p_y)
-#             # find the patches corresponding to this pixel and get the
-#             # middleness and pred per patch
-#             preds = []
-#             for j, inds in enumerate(index_arr):
-#                 x_s, x_e, y_s, y_e = inds
-#                 if x_s <= pixel[0] and x_e > pixel[0] and y_s <= pixel[1] and y_e > pixel[1]:
-#                     rel_x, rel_y = int(pixel[0] - x_s), int(pixel[1] - y_s)
-#                     # what values were predicted for this pixel?
-#                     pred_pixel = out_patch[j, :, rel_x, rel_y, :]
-#                     # how much in the middle is a pixel?
-#                     preds.append(pred_pixel)
-#             std_preds[:, pixel[0], pixel[1], :] = np.std(preds, axis=0)
-#     return std_preds
-# =============================================================================

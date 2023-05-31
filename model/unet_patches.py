@@ -1,5 +1,9 @@
 # copied from https://github.com/NinaWie/NeurIPS2021-traffic4cast
 
+"""
+Architecture for UNet model trained on patches of the input images.
+"""
+
 from typing import Optional
 from typing import Tuple
 

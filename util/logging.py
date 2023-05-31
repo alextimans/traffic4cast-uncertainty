@@ -1,4 +1,4 @@
-# base code from https://github.com/iarai/NeurIPS2021-traffic4cast
+# adapted from base code from https://github.com/iarai/NeurIPS2021-traffic4cast
 
 import logging
 import os
@@ -10,7 +10,3 @@ def t4c_apply_basic_logging_config(loglevel: str = None):
         format="[%(asctime)s][%(levelname)s][%(process)d][%(filename)s:%(funcName)s:%(lineno)d] %(message)s",
         force=True
     )
-
-"""
-https://stackoverflow.com/questions/32681289/python-logging-wont-set-a-logging-level-using-basicconfig
-"""

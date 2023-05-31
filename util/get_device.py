@@ -1,3 +1,7 @@
+"""
+Determine computing device based on availability and preference.
+"""
+
 import logging
 from typing import Tuple
 

@@ -1,4 +1,4 @@
-# base code from https://github.com/iarai/NeurIPS2021-traffic4cast
+# adapted from base code from https://github.com/iarai/NeurIPS2021-traffic4cast
 
 import os
 import datetime
@@ -13,6 +13,17 @@ import torch
 def load_torch_opt_from_checkpoint(checkpt_path: Union[str, Path],
                                    optimizer: torch.optim.Optimizer,
                                    map_location: str = None) -> Tuple[int, float]:
+    """
+    Load torch optimizer from checkpoint.
+
+    Args:
+        checkpt_path (Union[str, Path])
+        optimizer (torch.optim.Optimizer)
+        map_location (str, optional)
+
+    Returns:
+        Tuple[int, float]
+    """
 
     state_dict = torch.load(checkpt_path, map_location)
 
@@ -34,6 +45,15 @@ def load_torch_opt_from_checkpoint(checkpt_path: Union[str, Path],
 def load_torch_model_from_checkpoint(checkpt_path: Union[str, Path],
                                      model: torch.nn.Module,
                                      map_location: str = None):
+    """
+    Load torch model from checkpoint. Resolve possible key mismatches
+    arising from training and evaluation on different devices.
+
+    Args:
+        checkpt_path (Union[str, Path])
+        model (torch.nn.Module)
+        map_location (str, optional)
+    """
 
     state_dict = torch.load(checkpt_path, map_location)
     assert isinstance(state_dict, dict) and ("model" in state_dict)

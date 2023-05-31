@@ -1,3 +1,7 @@
+"""
+Monte Carlo batch normalization (MCBN) for epistemic uncertainty estimation.
+"""
+
 import random
 import logging
 from typing import Tuple
@@ -23,30 +27,36 @@ class StochasticBatchNorm:
 
     def set_bn_mode(self, model, set_all: bool = False):
         if set_all:
+            # Set stochastic behaviour for all BatchNorm layers
             for m in model.modules():
                 if isinstance(m, torch.nn.modules.batchnorm.BatchNorm2d):
                     m.train()
                     m.track_running_stats = False
         else:
             # Set stochastic batch behaviour only for first 2 BatchNorm layers
+            
+            # MODIFY HERE FOR DIFFERENT MODELS
             # model.down_path[0].block[2].train()
             # model.down_path[0].block[2].track_running_stats = False
             # model.down_path[0].block[5].train()
             # model.down_path[0].block[5].track_running_stats = False
+            
             # For UNet++
             model.conv0_0.bn1.train()
             model.conv0_0.bn1.track_running_stats = False
             model.conv0_0.bn2.train()
             model.conv0_0.bn2.track_running_stats = False
+        
         logging.info(f"Set BatchNorm in train mode, {set_all=}.")
 
     def aggregate(self, pred):
         
         """
-        Receives: prediction tensor (#passes, 6 * Ch, H, W) and
-        computes the average prediction and epistemic uncertainty.
-        Returns: tensor (2, 6 * Ch, H, W) where 1st dimension is mean point prediction (0),
-        uncertainty measure (1).
+        Receives: 
+            prediction tensor (#passes, 6 * Ch, H, W) and computes the average prediction and epistemic uncertainty.
+        
+        Returns: 
+            tensor (2, 6 * Ch, H, W) where 1st dimension is mean point prediction (0), uncertainty measure (1).
         """
 
         # Epistemic uncertainty estimation: std over forward pass preds; ensure uncertainty >0 for numerical reasons
@@ -72,20 +82,26 @@ class StochasticBatchNorm:
                 if batch == batch_limit:
                     break
 
+                # MODIFY HERE FOR DIFFERENT MODELS
                 # X, y = X.to(device, non_blocking=parallel_use) / 255, y.to(device, non_blocking=parallel_use)
                 X, y = X.to(device, non_blocking=parallel_use), y.to(device, non_blocking=parallel_use) # For UNet++
+                
                 preds = torch.empty(size=(self.passes, 48, 496, 448), dtype=torch.float32, device=device)
 
                 for p in range(0, self.passes): # Stochastic forward passes
                     tr_idx = random.sample(range(0, self.len), self.train_batch_size)
                     loader = DataLoader(Subset(self.data_train, tr_idx), self.train_batch_size, shuffle=False)
+                    
+                    # MODIFY HERE FOR DIFFERENT MODELS
                     # tr_batch = next(iter(loader))[0].to(device, non_blocking=parallel_use) / 255
                     tr_batch = next(iter(loader))[0].to(device, non_blocking=parallel_use) # For UNet++
+                    
                     # Pass X + train mini-batch through model and collect 'stochastic' pred for X
                     preds[p, ...] = model(torch.cat((X, tr_batch), dim=0))[0, ...]
 
                 y_pred = self.aggregate(preds) # (2, 6 * Ch, H+pad, W+pad)
                 del preds, loader, tr_batch
+                
                 loss = loss_fct(y_pred[0, :, 1:, 6:-6], y[:, :, 1:, 6:-6].squeeze(dim=0))
                 y_pred = post_transform(torch.cat((y, y_pred), dim=0))[:, 5, ...].clamp(0, 255).unsqueeze(dim=0) # (1, 3, H, W, Ch), only consider pred horizon 1h
 
@@ -101,10 +117,10 @@ class StochasticBatchNorm:
         return pred, loss_test
 
 
-"""
-https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html
-https://discuss.pytorch.org/t/normalizing-batchnorm2d-in-train-and-eval-mode/114067/2
-last comment: https://discuss.pytorch.org/t/what-does-model-eval-do-for-batchnorm-layer/7146/27
-https://developpaper.com/detailed-explanation-of-bn-core-parameters-of-pytorch/
-paper code: https://github.com/icml-mcbn/mcbn/blob/7c3338272eff0096c27dd139278037ea57c90cf7/code/segnet/test_bayesian_segnet_mcbn_paperResults.py#L87
+""" Some references for stochastic behaviour
+- https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html
+- https://discuss.pytorch.org/t/normalizing-batchnorm2d-in-train-and-eval-mode/114067/2
+- https://discuss.pytorch.org/t/what-does-model-eval-do-for-batchnorm-layer/7146/27 (last comment)
+- https://developpaper.com/detailed-explanation-of-bn-core-parameters-of-pytorch/
+- https://github.com/icml-mcbn/mcbn/blob/7c3338272eff0096c27dd139278037ea57c90cf7/code/segnet/test_bayesian_segnet_mcbn_paperResults.py#L87 (Teye et al code)
 """

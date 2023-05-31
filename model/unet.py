@@ -1,6 +1,9 @@
-# base code from https://github.com/iarai/NeurIPS2021-traffic4cast
-# which is a copy from https://github.com/mie-lab/traffic4cast/blob/aea6f90e8884c01689c84255c99e96d2b58dc470/models/unet.py
-# which is based on https://github.com/jvanvugt/pytorch-unet.
+# adapted from base code from https://github.com/iarai/NeurIPS2021-traffic4cast
+
+"""
+UNet model with custom formatting and args (as opposed to unet_t4c.py) but identical architecture.
+"""
+
 
 from typing import Optional, Tuple, Union
 
@@ -164,7 +167,7 @@ class UNetUpBlock(nn.Module):
     def forward(self, x, x_skip) -> torch.Tensor:
         x = self.up(x)
         x_skip_crop = self._center_crop(x_skip, target_size=x.shape)
-        out = torch.cat([x, x_skip_crop], 1) # Should it be [x_skip_crop, x] ?
+        out = torch.cat([x, x_skip_crop], 1)
         out = self.conv_block(out)
 
         return out

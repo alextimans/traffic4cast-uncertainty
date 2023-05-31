@@ -1,3 +1,7 @@
+"""
+Constant uncertainty baseline (CUB) for predictive uncertainty estimation.
+"""
+
 import torch
 from typing import Tuple
 from tqdm import tqdm
@@ -12,6 +16,7 @@ class PointPred:
         return torch.repeat_interleave(
             torch.std(pred[:, 1, ...], dim=0, unbiased=False
                       ).unsqueeze(dim=0), pred.shape[0], dim=0)
+        
         # 0.5 * abs (pred_max - pred_min) per cell
         # return torch.repeat_interleave(
         #     (0.5 * torch.abs(torch.max(pred[:, 1, ...], dim=0)[0] - torch.min(pred[:, 1, ...], dim=0)[0])
@@ -33,9 +38,9 @@ class PointPred:
                 if batch == batch_limit:
                     break
 
+                # MODIFY HERE FOR DIFFERENT MODELS
                 # X, y = X.to(device, non_blocking=parallel_use) / 255, y.to(device, non_blocking=parallel_use)
-                X, y = X.to(device, non_blocking=parallel_use), y.to(
-                    device, non_blocking=parallel_use)  # For UNet++
+                X, y = X.to(device, non_blocking=parallel_use), y.to(device, non_blocking=parallel_use)  # For UNet++
 
                 y_pred = model(X)  # (1, 6 * Ch, H+pad, W+pad)
                 loss = loss_fct(y_pred[:, :, 1:, 6:-6], y[:, :, 1:, 6:-6])
@@ -48,10 +53,8 @@ class PointPred:
                     f"Batch {batch+1}/{batch_limit} > eval")
                 tloader.set_postfix(loss=loss_test)
 
-                assert pred[(batch * bsize):(batch * bsize + bsize)
-                            ].shape == y_pred.shape
-                pred[(batch * bsize):(batch * bsize + bsize)
-                     ] = y_pred  # Fill slice
+                assert pred[(batch * bsize):(batch * bsize + bsize)].shape == y_pred.shape
+                pred[(batch * bsize):(batch * bsize + bsize)] = y_pred  # Fill slice
                 del X, y, y_pred
 
         # Constant uncertainty baseline per cell (pixel + channel)

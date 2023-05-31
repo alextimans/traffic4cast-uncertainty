@@ -1,4 +1,8 @@
-# base code from https://github.com/iarai/NeurIPS2021-traffic4cast
+# adapted from base code from https://github.com/iarai/NeurIPS2021-traffic4cast
+
+"""
+.h5 file format load and write utilities.
+"""
 
 import logging
 from pathlib import Path

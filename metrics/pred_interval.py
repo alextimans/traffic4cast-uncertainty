@@ -1,6 +1,7 @@
 """
 Prediction interval calculations following the conformal prediction framework
-as presented in Angelopoulos & Bates 2022, section 2.3.2.
+as presented in Angelopoulos & Bates 2023, section 2.3.2.
+Also contains coverage and MPIW metrics.
 """
 
 import torch
@@ -10,10 +11,12 @@ import numpy as np
 def get_quantile(pred, n: int = None, alpha: float = 0.1):
 
     """
-    Receives: prediction tensor (samples, 3, 6, H, W, Ch), where 2nd dim
-    '3' is y_true (0), point prediction (1), uncertainty measure (2).
-    Returns: the conformal prediction score function quantile across
-    the sample dimension as tensor (6, H, W, Ch).
+    Receives: 
+        prediction tensor (samples, 3, 6, H, W, Ch), where 2nd dim
+        '3' is y_true (0), point prediction (1), uncertainty measure (2).
+    
+    Returns: 
+        the conformal prediction score function quantile across the sample dimension as tensor (6, H, W, Ch).
 
     Prediction tensor should contain all predictions for the calibration set
     on a single city (may be large in the first dim depending on calibration set size).
@@ -52,18 +55,21 @@ def get_quantile(pred, n: int = None, alpha: float = 0.1):
 def get_pred_interval(pred, quantiles):
 
     """
-    Receives: prediction tensor (samples, 2, 6, H, W, Ch), where 2nd dim
-    '2' is point prediction (0), uncertainty measure (1);
-    quantile tensor (6, H, W, Ch) with calibration set quantiles.
-    Returns: prediction interval tensor (samples, 2, 6, H, W, Ch), where 2nd dim
-    '2' is interval lower bound (0), interval upper bound (1).
-    The prediction intervals returned are symmetric about the prediction.
+    Receives: 
+        prediction tensor (samples, 2, 6, H, W, Ch), where 2nd dim
+        '2' is point prediction (0), uncertainty measure (1);
+        quantile tensor (6, H, W, Ch) with calibration set quantiles.
+
+    Returns: 
+        prediction interval tensor (samples, 2, 6, H, W, Ch), where 2nd dim
+        '2' is interval lower bound (0), interval upper bound (1).
+        The prediction intervals returned are symmetric about the prediction.
 
     Prediction tensor should contain the predictions for the test set on
     a single city that matches the city for which the quantiles were computed.
 
     Note: Interval values are not clamped to [0, 255] and thus may exceed uint8 limits.
-          Clamping will influence mean PI width metric if performed prior to evaluation.
+            Clamping will influence MPIW if performed prior to evaluation.
     """
 
     return torch.stack(
@@ -78,10 +84,13 @@ def get_pred_interval(pred, quantiles):
 def coverage(pred):
 
     """
-    Receives: prediction interval tensor (samples, 3, 6, H, W, Ch), where 2nd dim
-    '3' is y_true(0), interval lower bound (1), interval upper bound (2).
-    Returns: empirical coverage as a fraction across the sample dimension
-    as tensor (6, H, W, Ch) with values in [0, 1].
+    Receives: 
+        prediction interval tensor (samples, 3, 6, H, W, Ch), where 2nd dim
+        '3' is y_true(0), interval lower bound (1), interval upper bound (2).
+    
+    Returns: 
+        empirical coverage as a fraction across the sample dimension
+        as tensor (6, H, W, Ch) with values in [0, 1].
     """
 
     bool_mask = torch.stack(
@@ -99,10 +108,12 @@ def coverage(pred):
 def mean_pi_width(pred):
 
     """
-    Receives: prediction interval tensor (samples, 2, 6, H, W, Ch), where 2nd dim
-    '2' is interval lower bound (0), interval upper bound (1).
-    Returns: prediction interval width mean across the sample dimension as
-    tensor (6, H, W, Ch).
+    Receives: 
+        prediction interval tensor (samples, 2, 6, H, W, Ch), where 2nd dim
+        '2' is interval lower bound (0), interval upper bound (1).
+    
+    Returns: 
+        prediction interval width mean across the sample dimension as tensor (6, H, W, Ch).
     """
 
     return torch.mean(torch.abs(pred[:, 1, ...] - pred[:, 0, ...]), dim=0)

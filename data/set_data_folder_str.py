@@ -9,6 +9,11 @@ from data.data_layout import CITY_NAMES, CITY_TRAIN_ONLY, CITY_TRAIN_VAL_TEST, C
 
 
 def set_data_folder_str(base_path: str = None):
+    
+    """
+    Set data folder structure for traffic4cast dataset.
+    Switch from 'training' to train/val/test folders with respective temporal splits for each city.
+    """
 
     for city in CITY_NAMES:
 

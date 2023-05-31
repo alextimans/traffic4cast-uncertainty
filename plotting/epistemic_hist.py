@@ -1,9 +1,11 @@
+"""
+Plot KDE fits over epistemic uncertainty values for selected pixels, incl. tests for goodness of fit.
+"""
+
 import os
 import argparse
 from pathlib import Path
 
-# import seaborn as sns
-# import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -11,8 +13,6 @@ from scipy.stats import norm
 from scipy.stats import gaussian_kde
 from scipy.stats import ks_2samp, anderson_ksamp
 
-# from sklearn.neighbors import KernelDensity
-# from statsmodels.nonparametric.kde import KDEUnivariate
 from statsmodels.nonparametric.bandwidths import bw_scott
 from statsmodels.nonparametric.kernels_asymmetric import pdf_kernel_asym
 
@@ -59,7 +59,7 @@ def epistemic_hist(fig_path: str,
         fig_dir = Path(os.path.join(fig_path, city))
         fig_dir.mkdir(exist_ok=True, parents=True)
 
-        fig, (axs1, axs2) = plt.subplots(2, 4, figsize=(14, 6)) # sharey="row"
+        fig, (axs1, axs2) = plt.subplots(2, 4, figsize=(14, 6))
 
         for i in range(4):
             ts_vol = unc_vol[:, i].numpy()
@@ -68,9 +68,6 @@ def epistemic_hist(fig_path: str,
             if mask: # no impact since unc clamped at 1e-4 from below
                 ts_vol = ts_vol[ts_vol > 0]
                 ts_speed = ts_speed[ts_speed > 0]
-
-            # ts_vol = check_ts(ts_vol)
-            # ts_speed = check_ts(ts_speed)
 
             axs1[i].hist(ts_vol, bins=10, alpha=0.5, color="blue", density=True)
             plot_normal(ts_vol, axs1[i])
@@ -93,6 +90,7 @@ def epistemic_hist(fig_path: str,
 
 
 def plot_normal(ts: np.ndarray, subplot):
+    # Normal fit
     mu, std = np.mean(ts), np.std(ts)
     x = np.linspace(mu - 4*std, mu + 4*std, 300)
     subplot.plot(x, norm.pdf(x, mu, std), color="red",
@@ -103,21 +101,18 @@ def plot_kde(ts: np.ndarray, subplot):
     mu, std = np.mean(ts), np.std(ts)
     x = np.linspace(mu - 4*std, mu + 4*std, 300)
 
-    # ts = ts.reshape(-1, 1)
-    # x = x.reshape(-1, 1)
-    # kde1 = KernelDensity(kernel="gaussian", bandwidth=0.05).fit(ts)
-    # subplot.plot(x, np.exp(kde1.score_samples(x)), label="KDE bw=.1")
-
+    # Gaussian KDE
     kde = gaussian_kde(ts, bw_method="scott")
     subplot.plot(x, kde.pdf(x), color="orange", label="KDE Norm")
 
+    # Gamma KDE
     bandw = bw_scott(ts)
+    pdf_asym = pdf_kernel_asym(x, ts, bw=bandw, kernel_type="gamma")
+    subplot.plot(x, pdf_asym, color="green", label="KDE Gamma")
+    
     # kde1 = KDEUnivariate(ts)
     # kde1.fit(kernel="gau", bw=bandw)
     # subplot.plot(x, kde1.evaluate(x), color="orange", label="KDE Normal")
-
-    pdf_asym = pdf_kernel_asym(x, ts, bw=bandw, kernel_type="gamma")
-    subplot.plot(x, pdf_asym, color="green", label="KDE Gamma")
 
     # Distribution fit tests for KDE Norm
     ss = kde.resample(1000, seed=42).reshape(-1)
@@ -125,36 +120,7 @@ def plot_kde(ts: np.ndarray, subplot):
     ad = "AD-p:{:.2f}".format(anderson_ksamp([ts, ss]).significance_level)
     subplot.plot([], [], ' ', label=ks)
     subplot.plot([], [], ' ', label=ad)
-
-    # # get p value v1: needs for loop for temporal dim per cell
-    # # EPISTEMIC_UNC can only be scalar
-    # if EPISTEMIC_UNC >= ts.median():
-    #     pval = kde1.integrate_box_1d(EPISTEMIC_UNC, np.inf)
-    # elif EPISTEMIC UNC < ts.median():
-    #     pval = kde1.integrate_box_1d(-np.inf, EPISTEMIC_UNC)
-
-    # # get p value v2: array-based for temporal dim per cell
-    # # ecdf can evaluate arrays
-    # from statsmodels.distributions.empirical_distribution import ECDF
-    # sfit = kde1.resample(100000, seed=42).reshape(-1)
-    # ecdf = ECDF(sfit)
-    # pval = 1 - ecdf([EPISTEMIC_UNC array])
-
-    # # get test decison based on test statistic
-    # # cannot quantify "outlierness" based on p-val
-    # from scipy.stats.mstats import mquantiles
-    # sfit = kde1.resample(100000, seed=42).reshape(-1)
-    # q = mquantiles(sfit, prob=[0.01, 0.99])
-    # out if EPISTEMIC_UNC > q[1] or EPISTEMIC_UNC < q[0]
-
-
-# def check_ts(ts: np.ndarray):
-#     if not ts.size: # empty
-#        ts = np.append(ts, np.array([1e-4, 1e-4]))
-#     if np.all(ts == 0): # only 0
-#         ts[:] = 1e-4
-#     return ts
-
+    
 
 def main():
     parser = create_parser()
