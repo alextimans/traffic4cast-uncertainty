@@ -1,9 +1,9 @@
 ## Overview
-This is the code repository for the research paper titled "Uncertainty Quantification for Image-based Traffic Prediction across Cities". Full paper here: [Link](https://arxiv.org/). 
+This is the code repository for the research paper titled "Uncertainty Quantification for Image-based Traffic Prediction across Cities". Full paper here: [Link](https://arxiv.org/abs/2308.06129). 
 
 #### Abstract :memo:
 ---
-Despite the strong predictive performance of deep learning models for traffic prediction, their widespread deployment in real-world intelligent transportation systems has been restrained by a lack of interpretability. Uncertainty quantification (UQ) methods provide an approach to induce probabilistic reasoning, improve decision-making and enhance model deployment potential. To gain a comprehensive picture on the usefulness of existing UQ methods for traffic prediction and the relation between obtained uncertainties and city-wide traffic dynamics, we investigate their application to a large-scale image-based traffic dataset spanning multiple cities and time periods. We compare two epistemic and two aleatoric UQ methods on both temporal and spatio-temporal transfer tasks, and find that meaningful uncertainty estimates can be recovered. We further demonstrate how uncertainty estimates can be employed for unsupervised outlier detection on changes in city traffic dynamics. We find that our approach can capture both temporal and spatial effects on traffic behaviour in a representative case study for the city of Moscow. Our work presents a further step towards boosting uncertainty awareness in traffic prediction tasks, and aims to highlight the value contribution of UQ methods to a better understanding of city traffic dynamics. The code for our experiments is publicly available.
+Despite the strong predictive performance of deep learning models for traffic prediction, their widespread deployment in real-world intelligent transportation systems has been restrained by a lack of interpretability. Uncertainty quantification (UQ) methods provide an approach to induce probabilistic reasoning, improve decision-making and enhance model deployment potential. To gain a comprehensive picture on the usefulness of existing UQ methods for traffic prediction and the relation between obtained uncertainties and city-wide traffic dynamics, we investigate their application to a large-scale image-based traffic dataset spanning multiple cities and time periods. We compare two epistemic and two aleatoric UQ methods on both temporal and spatio-temporal transfer tasks, and find that meaningful uncertainty estimates can be recovered. We further demonstrate how uncertainty estimates can be employed for unsupervised outlier detection on changes in city traffic dynamics. We find that our approach can capture both temporal and spatial effects on traffic behaviour in a representative case study for the city of Moscow. Our work presents a further step towards boosting uncertainty awareness in traffic prediction tasks, and aims to highlight the value contribution of UQ methods to a better understanding of city traffic dynamics.
 
 ---
 
@@ -14,8 +14,8 @@ If you find this work useful, please consider citing:
   title        = {Uncertainty Quantification for Image-based Traffic Prediction across Cities},
   year         = {2023},
   eprinttype   = {arxiv},
-  eprint       = {arXiv:XXXX.XXXX},
-  url          = {https://arxiv.org/abs/XXXX.XXXX},
+  eprint       = {arXiv:2308.06129},
+  url          = {https://arxiv.org/abs/2308.06129},
 }
 ```
 
